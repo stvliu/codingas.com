@@ -5,7 +5,7 @@ import { editionDiffI18n } from '../../../data/i18n/editionDiff.ts';
 
 const t = editionDiffI18n.en;
 ---
-<BaseLayout title={`${t.title} · LLM-Gateway`} description={t.intro}>
+<BaseLayout title={`${t.title} · codingas.com`} description={t.intro}>
   <section class="edition-hero">
     <h1>{t.title}</h1>
     <p class="intro">{t.intro}</p>
@@ -66,11 +66,11 @@ const t = editionDiffI18n.en;
   .edition-hero { padding: 48px 0 24px; }
   .edition-hero h1 { font-size: 2rem; }
   .edition-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0; }
-  .card { padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; }
-  .card.enterprise { border-color: var(--enterprise-badge, #16a34a); }
+  .card { padding: 24px; border: 1px solid var(--sl-color-hairline-shade); border-radius: 12px; }
+  .card.enterprise { border-color: var(--sl-color-green); }
   .edition-table { overflow-x: auto; margin: 32px 0; }
   table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-  .category-row th { background: #f9fafb; font-size: 0.95rem; }
-  .cta { display: inline-block; margin-top: 12px; padding: 10px 20px; background: var(--brand-primary, #6653e3); color: #fff; border-radius: 8px; text-decoration: none; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--sl-color-hairline-shade); }
+  .category-row th { background: var(--sl-color-gray-7); font-size: 0.95rem; }
+  .cta { display: inline-block; margin-top: 12px; padding: 10px 20px; background: var(--sl-color-accent); color: #fff; border-radius: 8px; text-decoration: none; }
 </style>

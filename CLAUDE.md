@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-codingas.com 官网与文档站，基于 Astro 6 + Starlight 0.40 + SCSS 构建，部署到 Cloudflare Pages。品牌正由 `LLM-Gateway` 切换为 `codingas.com`，代码中大量 `P0 占位` 注释标记了"域名/截图确定后需改"的位置——改动品牌相关内容时先全局搜 `P0 占位` 与 `LLM-Gateway`。
+codingas.com 官网与文档站，基于 Astro 6 + Starlight 0.40 + SCSS 构建，部署到 Cloudflare Pages。品牌已统一为 `codingas.com`，代码中大量 `P0 占位` 注释标记了"域名/截图确定后需改"的位置——改动品牌相关内容时先全局搜 `P0 占位` 与 `LLM-Gateway`。
 
 ## 常用命令
 
@@ -56,7 +56,7 @@ pnpm lint:linkcheck   # 扫描 dist/ 下 HTML 内部链接是否断链（必须�
 
 ### 品牌样式变量
 
-营销页品牌色单一来源在 `src/styles/global.scss` 的 `:root`：`--brand-primary`、`--brand-bg`、`--brand-text`、`--enterprise-badge`。组件以 `var(--brand-primary, #6653e3)` 形式引用，改品牌色只需改这一处。注意样式分层：营销页用 `--brand-*`，Starlight 文档页用 Starlight 自带的 `--sl-color-*` 体系（`global.scss` 不影响文档页）--两套变量不要混用。
+整站统一 Starlight 主题（`--sl-color-*` 体系）：文档页用 Starlight 默认组件与主题；营销页经 `BaseLayout.astro` 加载 `src/styles/starlight-theme.css`（Starlight 主题变量副本，从 `node_modules/@astrojs/starlight/style/props.css` 复制）与 `global.scss`（基础布局），共用 `--sl-color-*` 变量与暗色模式（`localStorage.starlight-theme` 与文档页 ThemeSelect 同步）。已移除 `--brand-*` 自定义品牌变量，改主题色改 `starlight-theme.css` 的 `--sl-color-accent`（Starlight 升级后重新复制 props.css）。注意样式分层：`global.scss` 经 `BaseLayout.astro` 仅作用于营销页；文档页不加载 `global.scss`，回归 Starlight 自带的 `--sl-color-*` 体系（与 docs.astro.build 视觉一致，dark mode 由 Starlight ThemeSelect 管理）--两套变量不要混用。
 
 ## 部署备注
 

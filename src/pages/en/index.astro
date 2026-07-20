@@ -9,7 +9,7 @@ import { homeFeatures } from '../../data/homeFeatures.ts';
 
 const t = home.en;
 ---
-<BaseLayout title={`${t.hero.title} · LLM-Gateway`} description={t.hero.subtitle}>
+<BaseLayout title={`${t.hero.title} · codingas.com`} description={t.hero.subtitle}>
   <Hero title={t.hero.title} subtitle={t.hero.subtitle} cta={t.hero.cta} secondaryCta={t.hero.secondaryCta} />
 
   <section class="differentiators">
@@ -43,19 +43,19 @@ const t = home.en;
 
   <section class="bottom-cta">
     <h2>{t.cta.title}</h2>
-    <a href="/features/" class="btn primary">{t.cta.button}</a>
+    <a href="/quickstart/" class="btn primary">{t.cta.button}</a>
   </section>
 </BaseLayout>
 
 <style>
   .differentiators { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 32px 0; }
-  .diff-item h4 { margin: 0 0 8px; color: var(--brand-primary, #6653e3); }
-  .diff-item p { margin: 0; font-size: 0.875rem; color: #6b7280; }
+  .diff-item h4 { margin: 0 0 8px; color: var(--sl-color-accent); }
+  .diff-item p { margin: 0; font-size: 0.875rem; color: var(--sl-color-gray-3); }
   .narrative, .products, .features { padding: 32px 0; }
   .narrative h2, .products h2, .features h2 { font-size: 1.5rem; margin-bottom: 24px; }
   .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
   .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
   .bottom-cta { text-align: center; padding: 64px 0; }
-  .bottom-cta .btn { display: inline-block; padding: 12px 28px; border-radius: 8px; background: var(--brand-primary, #6653e3); color: #fff; text-decoration: none; font-weight: 600; }
+  .bottom-cta .btn { display: inline-block; padding: 12px 28px; border-radius: 8px; background: var(--sl-color-accent); color: #fff; text-decoration: none; font-weight: 600; }
   @media (max-width: 768px) { .differentiators, .grid-2, .grid-4 { grid-template-columns: 1fr; } }
 </style>

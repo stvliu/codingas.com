@@ -1,6 +1,6 @@
 ---
 title: 常见问题
-description: LLM-Gateway 使用中的高频问题解答
+description: codingas.com 使用中的高频问题解答
 ---
 
 # 常见问题
@@ -9,14 +9,14 @@ description: LLM-Gateway 使用中的高频问题解答
 
 ### 网关 API Key 和上游 Provider Key 有什么区别？
 
-- **网关 API Key**（`sk-` 开头）：签发给调用方，用于调用 `/v1/*` 端点，在 [密钥管理](/apikey-management/) 创建
-- **上游 Provider Key**：上游供应商的密钥（如 OpenAI 的 `sk-xxx`），由管理员录入网关，见 [Provider 管理](/provider-management/)
+- **网关 API Key**（`sk-` 开头）：签发给调用方，用于调用 `/v1/*` 端点，在 [密钥管理](/admin/apikeys/) 创建
+- **上游 Provider Key**：上游供应商的密钥（如 OpenAI 的 `sk-xxx`），由管理员录入网关，见 [Provider 管理](/admin/providers/)
 
 调用方只需持有网关 API Key，无需接触上游密钥。
 
 ### 可以用 OpenAI SDK 调用 Anthropic 模型吗？
 
-可以。网关自动完成协议互转，客户端无需特殊参数。详见 [API 调用示例](/api/examples/) 的"协议互转"部分。
+可以。网关自动完成协议互转，客户端无需特殊参数。详见 [API 调用示例](/developer/examples/) 的"协议互转"部分。
 
 ### 调用返回 502 / 上游不可用？
 
@@ -50,8 +50,8 @@ local profile 使用 H2 文件库（`./data/gateway`），数据持久化到文�
 
 ### 忘记了 API Key 明文怎么办？
 
-明文仅创建时返回一次，无法找回。请在 [密钥管理](/apikey-management/) 重新创建 Key 并更新客户端配置，旧 Key 可删除。
+明文仅创建时返回一次，无法找回。请在 [密钥管理](/admin/apikeys/) 重新创建 Key 并更新客户端配置，旧 Key 可删除。
 
 ### 如何查看 Token 用量？
 
-调用 `GET /api/v1/stats` 查看概览统计。按维度查询的专用端点规划中，详见 [Token 计量与配额](/token-quota/)。
+调用 `GET /api/v1/stats` 查看概览统计。按维度查询的专用端点规划中，详见 [Token 计量与配额](/admin/token-quota/)。

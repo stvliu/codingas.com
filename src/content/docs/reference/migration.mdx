@@ -5,7 +5,7 @@ description: 版本升级与数据迁移
 
 # 升级指南
 
-> LLM-Gateway 当前为 1.0.0-SNAPSHOT，以下为通用升级流程。具体版本变更见 [更新日志](/changelog/)。
+> codingas.com 当前为 1.0.0-SNAPSHOT，以下为通用升级流程。具体版本变更见 [更新日志](/reference/changelog/)。
 
 ## 升级步骤
 
@@ -40,7 +40,7 @@ java -jar gateway-boot/target/gateway-boot-1.0.0-SNAPSHOT.jar \
 
 ## 数据库迁移
 
-LLM-Gateway 使用 Flyway 管理表结构（迁移脚本位于 `gateway-boot/src/main/resources/db/migration/`）。启动时自动执行：
+codingas.com 使用 Flyway 管理表结构（迁移脚本位于 `gateway-boot/src/main/resources/db/migration/`）。启动时自动执行：
 
 - `baseline-on-migrate: true`：首次在已有库上启动自动建立 baseline
 - `validate-on-migrate: true`：启动前校验已执行脚本完整性

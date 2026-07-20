@@ -1,0 +1,87 @@
+---
+title: SDK 与集成
+description: 原生 SDK 接入与第三方框架集成
+---
+
+# SDK 与集成
+
+:::note[官方 SDK 规划中]
+codingas.com 官方多语言 SDK（Python / TypeScript / Go）为 v2.0 规划功能，当前版本尚未提供。当前通过原生 OpenAI / Anthropic SDK 兼容接入；第三方框架（LangChain / LlamaIndex / Dify 等）凡支持自定义 OpenAI `base_url` 的均可直接接入。
+:::
+
+## 原生 SDK 接入
+
+网关兼容 OpenAI 与 Anthropic 标准，现有 SDK 只需修改 `base_url` 与 `api_key`。
+
+### Python（OpenAI SDK）
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="sk-xxxxxxxx",          # 网关 API Key
+    base_url="https://{gateway-host}/v1"
+)
+```
+
+### Node.js（OpenAI SDK）
+
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "sk-xxxxxxxx",
+  baseURL: "https://{gateway-host}/v1",
+});
+```
+
+### Python（Anthropic SDK）
+
+```python
+from anthropic import Anthropic
+
+client = Anthropic(
+    api_key="sk-xxxxxxxx",
+    base_url="https://{gateway-host}/anthropic"
+)
+```
+
+> 更多示例（流式、多轮、Function Calling）见 [调用示例](/developer/examples/)。
+
+## 第三方框架集成
+
+凡支持自定义 OpenAI `base_url` 的框架均可接入，将 `base_url` 指向网关、`api_key` 设为网关 API Key 即可。
+
+### LangChain（Python）
+
+```python
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(
+    model="gpt-4o",
+    api_key="sk-xxxxxxxx",
+    base_url="https://{gateway-host}/v1",
+)
+print(llm.invoke("你好").content)
+```
+
+### LlamaIndex（Python）
+
+```python
+from llama_index.llms.openai import OpenAI
+
+llm = OpenAI(
+    model="gpt-4o",
+    api_key="sk-xxxxxxxx",
+    base_url="https://{gateway-host}/v1",
+)
+print(llm.complete("你好").text)
+```
+
+### Dify / 其他平台
+
+在平台的"模型供应商"或"OpenAI 兼容"配置中，将 API Base 设为 `https://{gateway-host}/v1`，API Key 设为网关 API Key，模型名使用网关中配置的模型 ID。
+
+## 规划中的官方 SDK
+
+v2.0 计划提供 Python / TypeScript / Go 官方 SDK，兼容 OpenAI SDK 接口，自动处理认证、重试、错误处理。详见 [产品路线图](/reference/roadmap/)。

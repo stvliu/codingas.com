@@ -2,7 +2,7 @@
 export const editionDiffI18n = {
   zh: {
     title: '标准版 vs 企业版',
-    intro: 'LLM-Gateway 提供 Apache-2.0 开源标准版与企业版。企业版是标准版的超集，新增高级安全、可观测性与运维能力。',
+    intro: 'codingas.com 提供 Apache-2.0 开源标准版与企业版。企业版是标准版的超集，新增高级安全、可观测性与运维能力。',
     standard: '标准版',
     enterprise: '企业版',
     feature: '功能',
@@ -16,7 +16,7 @@ export const editionDiffI18n = {
   },
   en: {
     title: 'Standard vs Enterprise',
-    intro: 'LLM-Gateway ships as an Apache-2.0 open-source Standard edition and an Enterprise edition. Enterprise is a superset adding advanced security, observability and ops.',
+    intro: 'codingas.com ships as an Apache-2.0 open-source Standard edition and an Enterprise edition. Enterprise is a superset adding advanced security, observability and ops.',
     standard: 'Standard',
     enterprise: 'Enterprise',
     feature: 'Feature',

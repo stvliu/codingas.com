@@ -1,0 +1,76 @@
+---
+title: 路由设计
+description: 多渠道路由链与应用级优先级
+---
+
+# 路由设计
+
+codingas.com 支持一个模型名对应多个上游渠道，通过路由链筛选候选渠道，实现负载均衡与故障转移。
+
+## 多渠道模型
+
+同一个模型名（如 `gpt-4o`）可配置多个渠道，分别关联不同供应商：
+
+```
+用户请求 model="gpt-4o"
+    │
+    ▼
+渠道 1: OpenAI 直连  (priority=10)
+渠道 2: Azure OpenAI  (priority=20)
+渠道 3: 国内代理      (priority=30)
+    │
+    ▼ 路由链筛选 + 排序 -> 凭证选择 -> 转发
+```
+
+优势：不同渠道可有不同价格与可用性，主渠道故障时按优先级转移备用。
+
+## 路由链
+
+请求到达后，路由链按 `@Order` 顺序依次过滤候选渠道：
+
+| 路由器 | Order | 职责 |
+|--------|-------|------|
+| `PermissionRouter` | - | 应用级权限过滤（基于 `applicationId` 过滤未授权渠道） |
+| `HealthRouter` | 200 | 健康过滤（剔除熔断 / 不健康渠道） |
+| `PriorityRouter` | 300 | 按应用级 `priority` 升序排序（不收敛，输出全部候选） |
+| `LoadBalanceRouter` | 9999 | 透传（不再收敛到单实例） |
+
+> `PriorityRouter` 为强制路由器（`isForce=true`），输出全部候选供 L1 故障转移逐个尝试，避免收敛到最小组导致备渠道丢失。
+
+## priority 语义
+
+`priority` 是**应用级渠道优先级**，配置在应用渠道授权上（[应用管理](/admin/applications/)）：
+
+- **数值越小越优先**（默认 100）
+- 同一渠道在不同应用可有不同 priority，实现应用级转移顺序
+- 故障转移时按 priority 升序逐个尝试候选渠道
+
+:::note[与凭证 priority 的区别]
+应用级 `priority`（`ApplicationChannel.priority`）控制渠道间的转移顺序；渠道凭证的 `priority`（`ChannelCredential.priority`）控制同渠道内多 Key 的轮换顺序。两者层级不同。
+:::
+
+## 路由策略
+
+`RoutingStrategy` 定义 5 种策略：`RANDOM`、`WEIGHTED`、`FAILOVER`、`COST_OPTIMIZED`、`LATENCY_OPTIMIZED`。
+
+:::caution[当前实现]
+当前版本路由策略**硬编码为 `WEIGHTED`**（加权），调用方无法通过请求参数选择策略。`COST_OPTIMIZED`、`LATENCY_OPTIMIZED` 为规划项，详见 [产品路线图](/reference/roadmap/)。
+:::
+
+## 失败策略（应用级）
+
+失败策略（`FailureStrategy`）配置在应用上，决定调用失败后的行为：
+
+| 策略 | 行为 |
+|------|------|
+| `FAIL_FAST` | 立即失败，不重试不转移 |
+| `FAIL_RETRY` | 重试（默认） |
+| `FAIL_OVER` | 转移到下一候选渠道 |
+
+> 失败策略（应用级）与路由策略（渠道选择）是两个不同层级：路由策略决定初始选哪个渠道，失败策略决定失败后怎么办。详见 [容灾与高可用](/admin/resilience/)。
+
+## 相关概念
+
+- [应用管理](/admin/applications/)（应用级 priority 与 failureStrategy）
+- [渠道管理](/admin/channels/)（凭证 priority / weight）
+- [容灾与高可用](/admin/resilience/)（L0/L1 故障转移）

@@ -1,11 +1,11 @@
 ---
 title: 安装部署
-description: 开发与生产环境部署 LLM-Gateway 的多种方式
+description: 开发与生产环境部署 codingas.com 的多种方式
 ---
 
 # 安装部署
 
-LLM-Gateway 基于 Java 21 + Spring Boot 3.5，支持多种部署方式。开发期可用内嵌 H2 零依赖启动，生产环境推荐 PostgreSQL + Redis。
+codingas.com 基于 Java 21 + Spring Boot 3.5，支持多种部署方式。开发期可用内嵌 H2 零依赖启动，生产环境推荐 PostgreSQL + Redis。
 
 ## 环境要求
 
@@ -100,7 +100,7 @@ openssl rand -base64 32
 | `DB_USERNAME` / `DB_PASSWORD` | `sa` / 空 | 数据库账号 |
 | `REDIS_HOST` / `REDIS_PORT` | `localhost` / `6379` | Redis 地址 |
 | `GATEWAY_ENCRYPTION_KEY` | 空 | API Key 加密密钥（生产必填） |
-| `OTEL_ENABLED` | `false` | OpenTelemetry 开关 |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | 空 | OpenTelemetry Trace 上报地址 |
 
 完整清单见 `deployments/docker/.env.example`。
 
@@ -110,9 +110,9 @@ openssl rand -base64 32
 curl http://localhost:8080/actuator/health
 ```
 
-可用端点：`/actuator/health`、`/actuator/health/liveness`、`/actuator/health/readiness`、`/actuator/prometheus`、`/actuator/info`。
+可用端点：`/actuator/health`、`/actuator/health/liveness`、`/actuator/health/readiness`、`/actuator/prometheus`、`/actuator/info`。详见 [可观测性](/admin/observability/)。
 
-## Docker 部署
+## 四、Docker 部署
 
 仓库提供 `deployments/docker/Dockerfile` 与 `docker-compose.yml`（含 PostgreSQL、Redis、Prometheus、Grafana、Jaeger、OTel Collector）：
 
@@ -121,11 +121,21 @@ cd deployments/docker
 docker compose up -d
 ```
 
-> ⚠️ **注意**：当前 Dockerfile / compose 中的构建路径针对多模块结构（`gateway/gateway-app/...`），与仓库单模块 `gateway-boot` 存在差异，使用前需将相关路径调整为 `gateway-boot`。健康检查端点也应由 `/api/v1/health` 改为 `/actuator/health`。
+Dockerfile 采用多阶段构建（单模块 `gateway-boot`），运行阶段基于 `eclipse-temurin:21-jre-alpine`，健康检查端点为 `/actuator/health`，默认暴露 `8080` 端口。
 
-Kubernetes 部署可参考 `deployments/helm/llm-gateway/` Helm Chart。
+## 五、jlink 二进制包
+
+`deployments/package/` 提供 jlink 定制 JRE + jreleaser 打包，生成免 JRE 依赖的二进制发行包：
+
+```bash
+cd deployments/package
+./build.sh
+```
+
+产物为包含定制 JRE 的压缩包，解压后可直接运行，适合无 JDK 环境或离线部署。
 
 ## 下一步
 
 - [快速开始](/quickstart/)：跑通第一个请求
-- [API 调用示例](/api/examples/)：流式、多轮、SDK
+- [控制台快速上手](/console-guide/)：管理后台导览
+- [配置项参考](/reference/config/)：完整配置说明

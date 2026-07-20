@@ -11,7 +11,7 @@ export const navigation: NavItem[] = [
   { label: '产品', href: '/#products', enLabel: 'Product' },
   // 演示站点为外部地址（P0 占位，域名确定后改此一处）。
   { label: '演示', href: 'https://demo.codingas.com', enLabel: 'Demo', external: true },
-  { label: '文档', href: '/features/', enLabel: 'Docs' },
+  { label: '文档', href: '/quickstart/', enLabel: 'Docs' },
   { label: '版本对比', href: '/standard-vs-enterprise/', enLabel: 'Editions' },
   { label: '联系我们', href: '/contact-us/', enLabel: 'Contact' },
 ];

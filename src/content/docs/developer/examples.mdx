@@ -1,11 +1,11 @@
 ---
-title: API 调用示例
+title: 调用示例
 description: OpenAI / Anthropic 双端点的可运行调用示例
 ---
 
-# API 调用示例
+# 调用示例
 
-LLM-Gateway 同时兼容 OpenAI 与 Anthropic 两种 API 标准。Base URL 为 `http://{gateway-host}/v1`，调用方持有 `sk-` 开头的网关 API Key。下面示例假设已设置环境变量 `GATEWAY_KEY`。
+codingas.com 同时兼容 OpenAI 与 Anthropic 两种 API 标准。OpenAI 端点 Base URL 为 `https://{gateway-host}/v1`，Anthropic 端点为 `https://{gateway-host}/anthropic`。调用方持有 `sk-` 开头的网关 API Key。下面示例假设已设置环境变量 `GATEWAY_KEY`。
 
 ## OpenAI 兼容端点
 
@@ -59,12 +59,12 @@ curl http://localhost:8080/v1/chat/completions \
 
 ## Anthropic 兼容端点
 
-Anthropic 端点使用 `x-api-key` 头，且必须带 `anthropic-version`。
+Anthropic 端点路径为 `/anthropic/v1/messages`（带 `/anthropic` 前缀），使用 `x-api-key` 头，且必须带 `anthropic-version`。
 
 ### 基础对话
 
 ```bash
-curl http://localhost:8080/v1/messages \
+curl http://localhost:8080/anthropic/v1/messages \
   -H "x-api-key: $GATEWAY_KEY" \
   -H "anthropic-version: 2023-06-01" \
   -H "Content-Type: application/json" \
@@ -81,10 +81,10 @@ curl http://localhost:8080/v1/messages \
 
 ### 流式响应
 
-Anthropic 流式同时使用 `event:` 与 `data:` 行，文本增量在 `content_block_delta` 事件的 `delta.text` 中：
+Anthropic 流式同时使用 `event:` 与 `data:` 行，文本增量在 `content_block_delta` 事件的 `delta.text` 中，以 `message_stop` 结束：
 
 ```bash
-curl http://localhost:8080/v1/messages \
+curl http://localhost:8080/anthropic/v1/messages \
   -H "x-api-key: $GATEWAY_KEY" \
   -H "anthropic-version: 2023-06-01" \
   -H "Content-Type: application/json" \
@@ -100,10 +100,10 @@ curl http://localhost:8080/v1/messages \
 
 网关自动完成协议转换，**客户端无需任何特殊参数**：
 
-- 用 OpenAI SDK 调用 Anthropic 模型（如 `claude-sonnet-4-20250514`）——网关将 OpenAI 请求转为 Anthropic 格式
-- 用 Anthropic SDK 调用 OpenAI 模型（如 `gpt-4o`）——网关将 Anthropic 请求转为 OpenAI 格式
+- 用 OpenAI SDK 调用 Anthropic 模型（如 `claude-sonnet-4-20250514`）--网关将 OpenAI 请求转为 Anthropic 格式
+- 用 Anthropic SDK 调用 OpenAI 模型（如 `gpt-4o`）--网关将 Anthropic 请求转为 OpenAI 格式
 
-部分参数无法互转：OpenAI 的 `presence_penalty` / `frequency_penalty` / `n` / `seed`、Anthropic 的 `top_k` 在跨协议时会丢失。
+详见 [协议转换](/api/protocol-convert/)。
 
 ## 使用原生 SDK
 
@@ -148,7 +148,7 @@ from anthropic import Anthropic
 
 client = Anthropic(
     api_key="sk-xxxxxxxx",
-    base_url="http://localhost:8080"
+    base_url="http://localhost:8080/anthropic"
 )
 
 resp = client.messages.create(
@@ -161,28 +161,16 @@ print(resp.content[0].text)
 
 ## 错误处理
 
-网关对自身错误使用 OpenAI 兼容格式，并附加 `raw_code` / `raw_message` 透传上游信息：
+错误响应格式与状态码详见 [错误码与重试](/developer/errors/)。常见状态码速查：
 
-```json
-{
-  "error": {
-    "message": "用户可读的错误信息",
-    "type": "invalid_request_error",
-    "code": "quota_exceeded",
-    "raw_code": "GW_001",
-    "raw_message": "原始错误信息"
-  }
-}
-```
+| HTTP | 含义 |
+|------|------|
+| 400 | 请求错误（协议校验失败） |
+| 401 | 认证失败 |
+| 403 | 权限不足 |
+| 429 | 限流 |
+| 500 | 服务器错误 |
+| 502 | 上游 Provider 错误 |
+| 503 | 熔断开启 |
 
-常见状态码：
-
-| HTTP | 含义 | OpenAI code | Anthropic type |
-|------|------|-------------|----------------|
-| 401 | 认证失败 | `invalid_api_key` | `authentication_error` |
-| 403 | 权限不足 | `permission_denied` | `permission_error` |
-| 404 | 模型/资源不存在 | `model_not_found` | `not_found_error` |
-| 429 | 限流 | `rate_limit_exceeded` | `rate_limit_error` |
-| 502 | 上游不可用 | `api_error` | `api_error` |
-
-完整错误码见 [API 参考](/api/api-spec/)。
+完整端点细节见 [对话补全 API](/api/chat-completions/)。

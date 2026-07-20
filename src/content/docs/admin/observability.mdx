@@ -1,0 +1,68 @@
+---
+title: 可观测性
+description: 全链路追踪、结构化日志与实时指标
+---
+
+# 可观测性
+
+codingas.com 内建 OpenTelemetry 标准追踪，每个请求携带 Trace ID 贯穿全链路，并暴露 Prometheus 指标与结构化日志。
+
+## 健康检查与指标
+
+网关通过 Spring Boot Actuator 暴露运维端点：
+
+| 端点 | 说明 |
+|------|------|
+| `/actuator/health` | 健康检查 |
+| `/actuator/health/liveness` | 存活探针 |
+| `/actuator/health/readiness` | 就绪探针（含 `db`、`providerRegistry`） |
+| `/actuator/prometheus` | Prometheus 指标抓取 |
+| `/actuator/metrics` | 指标查询 |
+| `/actuator/traces` | 追踪查询 |
+
+```bash
+curl http://localhost:8080/actuator/health
+curl http://localhost:8080/actuator/prometheus
+```
+
+> 就绪探针包含 `db` 与 `providerRegistry`，启动时验证数据源与 Provider 注册表。Provider 健康配置：`stale-threshold=300s`、`failure-threshold=3`、`success-threshold=2`、`probe-timeout=10s`。
+
+## OpenTelemetry 追踪
+
+通过标准 OpenTelemetry 环境变量启用 Trace 上报（`management.tracing.sampling.probability` 默认 `1.0`）：
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+```
+
+每个请求的 Trace ID 贯穿：客户端调用 -> 认证 -> 路由 -> 上游调用 -> 计量 -> 审计，可在响应头或日志中获取。调用方反馈问题时建议提供 `traceId` 以便排查，详见 [错误码与重试](/developer/errors/)。
+
+## 结构化日志
+
+日志由 `logback-spring.xml` 管理，默认 JSON 结构化输出，包含 `traceId`、时间戳、级别、logger 等字段，便于采集与检索。
+
+## 监控栈部署
+
+`deployments/docker/docker-compose.yml` 预置监控栈组件，`docker compose up -d` 可启动：
+
+| 组件 | 端口 | 用途 |
+|------|------|------|
+| Prometheus | 9090 | 指标采集（抓取 `/actuator/prometheus`） |
+| Grafana | 3001 | 指标可视化 |
+| Jaeger | 16686 | 链路追踪查询 |
+| OTel Collector | 4317 / 4318 | Trace 接收与转发 |
+
+:::note[企业版能力]
+监控栈组件可自部署使用。**预置 Grafana 仪表盘**（配置好的官方面板）与 **Jaeger 官方集成**为企业版规划能力，详见 [产品路线图](/reference/roadmap/)。标准版可基于 Prometheus 指标自建 Grafana 面板。
+:::
+
+## 功能清单
+
+| 功能 | 标准版 | 企业版 |
+|---|---|---|
+| Trace ID（全链路追踪） | ✅ | ✅ |
+| 结构化日志（JSON 格式） | ✅ | ✅ |
+| Prometheus 指标导出 | ✅ | ✅ |
+| Actuator 健康检查 | ✅ | ✅ |
+| 预置 Grafana 仪表盘 | - | 规划中 |
+| Jaeger 官方集成 | - | 规划中 |

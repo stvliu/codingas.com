@@ -23,12 +23,12 @@ description: 常见错误码与问题定位
 
 - **OpenAI 端点**：确认 `Authorization: Bearer sk-xxx` 格式正确
 - **Anthropic 端点**：确认使用 `x-api-key` 头（非 Bearer）+ `anthropic-version: 2023-06-01`
-- Key 是否已删除或禁用：在 [密钥管理](/apikey-management/) 查询
+- Key 是否已删除或禁用：在 [密钥管理](/admin/apikeys/) 查询
 
 ### 404 模型不存在
 
 - 检查请求的 `model` 字段拼写（如 `gpt-4o` 而非 `gpt4o`）
-- 确认管理后台已配置该模型的渠道（见 [Provider 管理](/provider-management/)）
+- 确认管理后台已配置该模型的渠道（见 [Provider 管理](/admin/providers/)）
 - 确认 Key 绑定的应用已授权访问该模型所在渠道
 
 ### 429 限流
@@ -37,10 +37,10 @@ description: 常见错误码与问题定位
 
 ### 502 上游不可用
 
-- 在 [Provider 管理](/provider-management/) 检查上游 Key 健康状态：`GET /api/v1/providers/{id}/keys/{id}/health`
+- 在 [渠道管理](/admin/channels/) 检查渠道健康状态：`POST /api/v1/channels/{id}/health-check`
 - 确认上游 Provider Key 未过期、未失效
 - 检查网关到上游的网络连通性
-- 配置多个上游 Key + 故障转移（`FAIL_OVER` 策略）可提升可用性，见 [容灾方案](/features/resilience/)
+- 配置多个上游 Key + 故障转移（`FAIL_OVER` 策略）可提升可用性，见 [容灾方案](/admin/resilience/)
 
 ### 调用很慢
 

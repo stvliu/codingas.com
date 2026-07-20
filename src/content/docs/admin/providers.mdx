@@ -1,0 +1,73 @@
+---
+title: Provider 管理
+description: 上游模型供应商接入与连通性测试
+---
+
+# Provider 管理
+
+Provider 是上游模型供应商（如 OpenAI、Anthropic、火山引擎）。codingas.com 内置 21 个主流供应商元数据，开箱即用。Provider 管理负责供应商接入与连通性验证。
+
+## 核心概念
+
+| 概念 | 说明 |
+|------|------|
+| Provider | 上游模型供应商（元数据位于 `data/builtin/vendors/`） |
+| Channel | 渠道，绑定 Provider，配置端点与凭证 |
+| 凭证（Credential） | 上游 API Key，挂在渠道下，由 `ChannelCredentialController` 管理 |
+
+:::note[Provider 与 Channel 的关系]
+Provider 是供应商元数据（名称、协议、默认配置）；Channel 是具体接入实例，绑定一个 Provider 并配置端点、凭证、模型映射。上游 API Key（凭证）挂在**渠道**下，而非 Provider 下。
+:::
+
+## Provider API
+
+`/api/v1/providers`（需 Sa-Token 登录态）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/v1/providers` | 创建 Provider |
+| GET | `/api/v1/providers/{id}` | Provider 详情 |
+| GET | `/api/v1/providers` | Provider 列表（分页） |
+| PUT | `/api/v1/providers/{id}` | 更新 Provider |
+| DELETE | `/api/v1/providers/{id}` | 删除 Provider |
+| GET | `/api/v1/providers/names` | 所有供应商名称（供前端选择） |
+| POST | `/api/v1/providers/test-connectivity` | 测试连通性 |
+
+## 内置供应商
+
+内置 21 个主流供应商（OpenAI / Anthropic / Google / DeepSeek / 通义千问 / 月之暗面 / 智谱 / 百川 / MiniMax / 腾讯混元 / 火山引擎 / 百度文心 / 讯飞 / 华为盘古 / Azure / AWS Bedrock / 360 智脑 / 零一万物 / Mistral / 阶跃星辰 / xAI），详见 [模型与定价](/developer/models-pricing/)。
+
+## 上游 API Key（凭证）管理
+
+上游 API Key 作为**渠道凭证**管理，路径为 `/api/v1/channels/{channelId}/credentials`，支持：
+
+- 凭证 CRUD（`apiKey` / `priority` / `weight` / `description`）
+- 凭证测试（`POST /{id}/test`）
+- 凭证明文仅详情接口返回（用于复制），存储时 AES-256 加密
+
+详见 [渠道管理](/admin/channels/) 的"凭证管理"。
+
+## 多 Key 轮换与负载均衡
+
+一个渠道可挂多个凭证（上游 Key），网关按以下策略调度：
+
+- **priority**：数值越小越优先（默认 100）
+- **weight**：同优先级内的流量分配权重
+- **故障转移**：L0 容灾在同渠道内按凭证逐个尝试，详见 [容灾与高可用](/admin/resilience/)
+
+## 控制台操作
+
+控制台 **Channels** 模块下管理 Provider 与凭证：
+
+- 创建渠道时选择 Provider
+- 渠道详情抽屉的"凭证"区域管理上游 Key
+- 连通性测试验证接入
+
+详见 [渠道管理](/admin/channels/) 与 [控制台快速上手](/console-guide/)。
+
+## 相关概念
+
+- [渠道管理](/admin/channels/)
+- [模型与定价](/developer/models-pricing/)
+- [路由设计](/admin/routing/)
+- [容灾与高可用](/admin/resilience/)

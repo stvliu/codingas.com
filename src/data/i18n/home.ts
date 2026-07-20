@@ -28,7 +28,7 @@ export const home = {
     },
     console: { title: '控制台预览', placeholder: '控制台截图（P0 占位，待补充真实截图）' },
     features: { title: '8 大能力域' },
-    cta: { title: '开始使用 LLM-Gateway', button: '查看文档' },
+    cta: { title: '开始使用 codingas.com', button: '查看文档' },
   },
   en: {
     hero: {
@@ -58,6 +58,6 @@ export const home = {
     },
     console: { title: 'Console Preview', placeholder: 'Console screenshots (placeholder, real shots pending)' },
     features: { title: '8 Capability Domains' },
-    cta: { title: 'Start with LLM-Gateway', button: 'View Docs' },
+    cta: { title: 'Start with codingas.com', button: 'View Docs' },
   },
 } as const;

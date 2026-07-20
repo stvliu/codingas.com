@@ -1,25 +1,19 @@
-// 营销页全局样式。Starlight 文档站样式由 Starlight 自带，此处仅影响营销页。
-:root {
-  --brand-primary: #6653e3;
-  --brand-bg: #ffffff;
-  --brand-text: #1a1a2e;
-  --enterprise-badge: #16a34a;
-}
-
+// 营销页基础样式。Starlight 主题变量（--sl-color-*）由 BaseLayout 加载 props.css 提供，
+// 整站统一 Starlight 主题，与文档页视觉一致。
 html {
   scroll-behavior: smooth;
 }
 
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC",
-    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  color: var(--brand-text);
-  background: var(--brand-bg);
+/* 全局 box-sizing，确保 padding 内含于宽度（页面 100% 撑满不溢出） */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
+/* 页面容器：最大宽度 100%，撑满视口，两侧留 padding */
 .container {
   max-width: 100%;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--sl-content-pad-x);
 }

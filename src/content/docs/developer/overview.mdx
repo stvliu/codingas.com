@@ -1,0 +1,41 @@
+---
+title: API 概览
+description: OpenAI 与 Anthropic 双兼容端点总览
+---
+
+# API 概览
+
+codingas.com 网关同时兼容 OpenAI 与 Anthropic 两种 API 标准，客户端可继续使用原生 SDK，只需将 `base_url` 指向网关。
+
+## 端点总览
+
+| 协议 | 端点 | 方法 | 说明 |
+|------|------|------|------|
+| OpenAI | `/v1/chat/completions` | POST | 对话补全（核心） |
+| Anthropic | `/anthropic/v1/messages` | POST | 消息创建（核心） |
+| OpenAI | `/v1/models` | GET | 模型列表 |
+
+:::note[规划端点]
+其他端点（`/v1/completions`、`/v1/embeddings`、`/v1/images/*`、`/v1/audio/*`、`/v1/moderations`、`/v1/models/{model}`）为规划项，当前版本尚未实现，详见 [产品路线图](/reference/roadmap/)。
+:::
+
+## Base URL 与认证
+
+| 项 | 说明 |
+|---|------|
+| Base URL | `https://{gateway-host}`（本地默认 `http://localhost:8080`） |
+| OpenAI 端点认证 | `Authorization: Bearer <api-key>` |
+| Anthropic 端点认证 | `x-api-key: <api-key>` + `anthropic-version: 2023-06-01` |
+
+> 调用方 API Key 以 `sk-` 开头，由管理后台签发，与上游 Provider Key 不同。详见 [认证与调用](/developer/auth-call/)。
+
+## 协议互转
+
+网关内置 `ProtocolConverter`，自动完成 OpenAI ↔ Anthropic 协议转换：可用 OpenAI SDK 调用 Anthropic 模型，反之亦然。详见 [协议转换](/api/protocol-convert/)。
+
+## 下一步
+
+- [认证与调用](/developer/auth-call/)：鉴权方式与基础调用
+- [调用示例](/developer/examples/)：可运行的 cURL / SDK 示例
+- [API 参考](/api/chat-completions/)：端点细节、参数、错误码
+- [模型与定价](/developer/models-pricing/)：内置供应商与模型清单
