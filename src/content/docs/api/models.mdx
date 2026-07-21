@@ -1,0 +1,78 @@
+---
+title: 模型列表 API
+description: GET /v1/models 获取可用模型
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+# 模型列表 API
+
+`GET /v1/models` 是 OpenAI 兼容的模型列表端点，返回当前 API Key 可见的模型。
+
+## 认证
+
+| Header | 值 |
+|--------|----|
+| `Authorization` | `Bearer <api-key>` |
+
+## 请求
+
+无请求体，无 Query 参数。
+
+## 响应
+
+### 200 OK
+
+```json
+{
+  "object": "list",
+  "data": [
+    { "id": "gpt-4o", "object": "model", "created": 1700000000, "ownedBy": "openai" },
+    { "id": "claude-sonnet-4-20250514", "object": "model", "created": 1700000000, "ownedBy": "anthropic" }
+  ]
+}
+```
+
+:::note[字段说明]
+`ownedBy` 为网关实际返回字段（非 OpenAI 标准的 `owned_by`），使用 OpenAI SDK 严格模式时可能需要适配。
+:::
+
+## 可见性
+
+返回的模型列表基于 API Key 关联的 `applicationId`，仅包含该应用授权渠道下的可见模型。若预期模型未出现，请检查应用渠道授权（[应用管理](/admin/applications/)）。
+
+## HTTP 状态码
+
+| 状态码 | 说明 |
+|--------|------|
+| 200 | 成功 |
+| 401 | API Key 无效 |
+
+## 示例
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl https://{gateway-host}/v1/models -H "Authorization: Bearer sk-xxx"
+```
+</TabItem>
+<TabItem label="Python">
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="https://{gateway-host}/v1", api_key="sk-xxx")
+models = client.models.list()
+for m in models.data:
+    print(m.id)
+```
+</TabItem>
+<TabItem label="JavaScript">
+```javascript
+import OpenAI from 'openai';
+
+const client = new OpenAI({ baseURL: 'https://{gateway-host}/v1', apiKey: 'sk-xxx' });
+const models = await client.models.list();
+models.data.forEach((m) => console.log(m.id));
+```
+</TabItem>
+</Tabs>

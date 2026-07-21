@@ -1,0 +1,177 @@
+---
+title: Anthropic 消息 API
+description: POST /anthropic/v1/messages（Anthropic 兼容）
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+# Anthropic 消息 API
+
+`POST /anthropic/v1/messages` 兼容 Anthropic Messages API，可直接使用 Anthropic 官方 SDK。
+
+:::caution[路径前缀]
+Anthropic 端点路径为 `/anthropic/v1/messages`，带 `/anthropic` 前缀，**非** `/v1/messages`。使用 Anthropic SDK 时 `base_url` 应设为 `https://{gateway-host}/anthropic`。
+:::
+
+## 认证
+
+| Header | 值 |
+|--------|----|
+| `x-api-key` | `<api-key>` |
+| `anthropic-version` | `2023-06-01` |
+| `Content-Type` | `application/json` |
+
+## 请求参数
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `model` | string | 是 | 模型 ID，如 `claude-sonnet-4-20250514` |
+| `messages` | array | 是 | 消息数组，每项含 `role`（`user`/`assistant`）与 `content` |
+| `max_tokens` | integer | 是 | 最大生成 token 数 |
+| `system` | string | 否 | 系统提示 |
+| `temperature` | number | 否 | 采样温度 |
+| `stop_sequences` | array | 否 | 停止序列 |
+| `tools` | array | 否 | 工具定义 |
+| `tool_choice` | object | 否 | 工具选择 |
+| `stream` | boolean | 否 | 是否流式，默认 `false` |
+
+:::note[多模态]
+`messages[].content` 为 Object 数组，支持多模态输入（文本 + 图像）。OpenAI 端点的 `content` 为 String，不支持多模态，需调用本端点。
+:::
+
+## 响应
+
+### 200 OK
+
+```json
+{
+  "id": "msg-xxx",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    { "type": "text", "text": "你好！" }
+  ],
+  "model": "claude-sonnet-4-20250514",
+  "stop_reason": "end_turn",
+  "usage": { "input_tokens": 10, "output_tokens": 5 }
+}
+```
+
+流式响应（`stream: true`）以 SSE 返回，事件类型包括 `message_start`、`content_block_delta`、`message_delta`，以 `message_stop` 结束。
+
+## HTTP 状态码
+
+| 状态码 | 说明 | 响应格式 |
+|--------|------|---------|
+| 200 | 成功 | Anthropic 格式 |
+| 400 | 请求错误（协议校验失败） | Anthropic 错误格式 |
+| 401 | API Key 无效 | ApiResponse 格式 |
+| 403 | 权限不足（应用未授权该渠道） | ApiResponse 格式 |
+| 429 | 限流 | ApiResponse 格式 |
+| 500 | 服务器错误 | ApiResponse 格式 |
+| 502 | 上游 Provider 错误 | ApiResponse 格式 |
+| 503 | 熔断开启 | ApiResponse 格式 |
+
+错误格式详见 [错误码与重试](/developer/errors/)。
+
+## 场景示例
+
+### 基础对话
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl https://{gateway-host}/anthropic/v1/messages \
+  -H "x-api-key: sk-xxx" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model":"claude-sonnet-4-20250514",
+    "max_tokens":1024,
+    "messages":[{"role":"user","content":"你好"}]
+  }'
+```
+</TabItem>
+<TabItem label="Python">
+```python
+from anthropic import Anthropic
+
+client = Anthropic(base_url="https://{gateway-host}/anthropic", api_key="sk-xxx")
+resp = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "你好"}],
+)
+print(resp.content[0].text)
+```
+</TabItem>
+<TabItem label="JavaScript">
+```javascript
+import Anthropic from '@anthropic-ai/sdk';
+
+const client = new Anthropic({ baseURL: 'https://{gateway-host}/anthropic', apiKey: 'sk-xxx' });
+const resp = await client.messages.create({
+  model: 'claude-sonnet-4-20250514',
+  max_tokens: 1024,
+  messages: [{ role: 'user', content: '你好' }],
+});
+console.log(resp.content[0].text);
+```
+</TabItem>
+</Tabs>
+
+### 流式响应
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl https://{gateway-host}/anthropic/v1/messages \
+  -H "x-api-key: sk-xxx" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model":"claude-sonnet-4-20250514",
+    "max_tokens":1024,
+    "messages":[{"role":"user","content":"讲个故事"}],
+    "stream":true
+  }'
+```
+</TabItem>
+<TabItem label="Python">
+```python
+from anthropic import Anthropic
+
+client = Anthropic(base_url="https://{gateway-host}/anthropic", api_key="sk-xxx")
+with client.messages.stream(
+    model="claude-sonnet-4-20250514",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "讲个故事"}],
+) as stream:
+    for text in stream.text_stream:
+        print(text, end="", flush=True)
+```
+</TabItem>
+<TabItem label="JavaScript">
+```javascript
+import Anthropic from '@anthropic-ai/sdk';
+
+const client = new Anthropic({ baseURL: 'https://{gateway-host}/anthropic', apiKey: 'sk-xxx' });
+const stream = await client.messages.stream({
+  model: 'claude-sonnet-4-20250514',
+  max_tokens: 1024,
+  messages: [{ role: 'user', content: '讲个故事' }],
+});
+for await (const event of stream) {
+  if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+    process.stdout.write(event.delta.text);
+  }
+}
+```
+</TabItem>
+</Tabs>
+
+## 下一步
+
+- OpenAI 风格调用：[对话补全 API](/api/chat-completions/)
+- 协议互转：[协议转换](/api/protocol-convert/)
+- 更多示例：[调用示例](/developer/examples/)

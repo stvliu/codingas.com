@@ -1,0 +1,88 @@
+---
+title: 渠道管理
+description: 渠道--上游接入、凭证、端点、模型映射与熔断的核心
+---
+
+# 渠道管理
+
+渠道（Channel）是上游模型接入的核心单元。一个渠道绑定一个 Provider，配置协议端点、Provider API Key 凭证、模型映射，并独立维护熔断器与健康状态。
+
+## 核心概念
+
+- **渠道 = Provider + 端点 + 凭证 + 模型映射**
+- **渠道分组**：按 Provider 或用途分组
+- **计费模式**：`billingMode` 区分计费方式
+- **端点级熔断**：每个协议端点独立熔断（CLOSED / OPEN / HALF_OPEN）
+
+## 渠道 CRUD
+
+`/api/v1/channels`（需 Sa-Token 登录态）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/v1/channels` | 创建渠道 |
+| PUT | `/api/v1/channels/{id}` | 更新渠道 |
+| GET | `/api/v1/channels/{id}` | 渠道详情 |
+| GET | `/api/v1/channels` | 渠道列表（支持 `providerId`、`billingMode` 过滤） |
+| DELETE | `/api/v1/channels/{id}` | 删除渠道 |
+| PUT | `/api/v1/channels/{id}/state` | 切换渠道状态（由后端校验状态机） |
+
+## 端点管理
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/v1/channels/{channelId}/endpoints` | 添加端点 |
+| PUT | `/api/v1/channels/{channelId}/endpoints/{endpointId}` | 更新端点 |
+| DELETE | `/api/v1/channels/{channelId}/endpoints/{endpointId}` | 删除端点 |
+
+## 凭证管理（Provider API Key）
+
+`/api/v1/channels/{channelId}/credentials`
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/credentials` | 凭证列表 |
+| GET | `/credentials/{id}` | 凭证详情（含明文，用于复制） |
+| POST | `/credentials` | 创建凭证（`apiKey` / `priority` / `weight` / `description`） |
+| PUT | `/credentials/{id}` | 更新凭证 |
+| DELETE | `/credentials/{id}` | 删除凭证 |
+| POST | `/credentials/{id}/test` | 测试 API Key 有效性 |
+
+:::note[多 Key 轮换]
+凭证含 `priority` 与 `weight`，用于同渠道内多 Key 轮换与负载均衡。L0 容灾在同渠道内按凭证逐个尝试，详见 [容灾与高可用](/admin/resilience/)。
+:::
+
+## 模型映射
+
+`/api/v1/channels/{channelId}/models`（ModelInstanceController）：将网关对外模型名映射到上游实际模型名。
+
+## 健康检查与应急熔断
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/v1/channels/{id}/health-check` | 触发连通性测试（按聚合规则写入健康状态） |
+| POST | `/api/v1/channels/{channelId}/endpoints/{endpointId}/circuit-breaker/force-open` | 强制熔断 |
+| POST | `/api/v1/channels/{channelId}/endpoints/{endpointId}/circuit-breaker/force-close` | 强制恢复 |
+| GET | `/api/v1/channels/{channelId}/endpoints/{endpointId}/circuit-breaker/state` | 查询熔断状态 |
+
+> 应急熔断用于故障时快速隔离问题端点，修复后强制恢复。
+
+## 控制台操作
+
+控制台 **Channels** 模块功能最丰富：
+
+- **创建向导**：引导式新建渠道
+- **详情抽屉**：编辑渠道全貌（凭证 / 端点 / 模型映射 / 配额）
+- **分组列表 / 表格视图**：按 Provider 分组或平铺
+- **连通性测试**：验证渠道可用性
+- **熔断器按钮**：一键熔断 / 恢复
+- **批量导入 / 导出**：批量管理渠道
+
+详见 [控制台快速上手](/console-guide/)。
+
+## 相关概念
+
+- [Provider 管理](/admin/providers/)
+- [应用管理](/admin/applications/)
+- [路由设计](/admin/routing/)
+- [容灾与高可用](/admin/resilience/)

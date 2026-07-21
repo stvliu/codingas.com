@@ -1,0 +1,51 @@
+---
+title: 协议转换
+description: OpenAI 与 Anthropic 协议互转
+---
+
+# 协议转换
+
+codingas.com 网关内置 `ProtocolConverter`，实现 OpenAI 与 Anthropic 两种协议的互转。调用方可以用任一协议调用任一上游模型，无需关心后端实际协议。
+
+## 互转矩阵
+
+| 调用协议 | 上游模型 | 行为 |
+|---------|---------|------|
+| OpenAI（`/v1/chat/completions`） | OpenAI 系列 | 直通 |
+| OpenAI（`/v1/chat/completions`） | Anthropic 系列 | OpenAI → Anthropic 转换 |
+| Anthropic（`/anthropic/v1/messages`） | Anthropic 系列 | 直通 |
+| Anthropic（`/anthropic/v1/messages`） | OpenAI 系列 | Anthropic → OpenAI 转换 |
+
+## 使用场景
+
+- **统一 SDK**：应用统一使用 OpenAI SDK，但希望调用 Claude 模型——直接在请求中指定 `model: claude-sonnet-4-20250514` 即可，网关自动转换
+- **迁移成本最小化**：从 OpenAI 迁移到 Claude 或反向迁移时，无需修改客户端代码
+
+## 示例：用 OpenAI SDK 调用 Claude
+
+```bash
+curl https://{gateway-host}/v1/chat/completions \
+  -H "Authorization: Bearer sk-xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"claude-sonnet-4-20250514","messages":[{"role":"user","content":"你好"}]}'
+```
+
+网关自动将 OpenAI 请求转为 Anthropic 格式调用上游，响应再转回 OpenAI 格式返回调用方。
+
+## 示例：用 Anthropic SDK 调用 GPT
+
+```bash
+curl https://{gateway-host}/anthropic/v1/messages \
+  -H "x-api-key: sk-xxx" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o","max_tokens":1024,"messages":[{"role":"user","content":"你好"}]}'
+```
+
+## 转换限制
+
+- 字段映射遵循各协议规范，部分独有字段在转换中可能丢失
+- **多模态**：OpenAI 端点 `content` 为 String，不支持 `image_url`；多模态输入请使用 Anthropic 端点
+- 协议互转不改变路由与容灾行为，故障转移与熔断按渠道端点独立工作
+
+详见 [对话补全 API](/api/chat-completions/) 与 [Anthropic 消息 API](/api/messages/)。

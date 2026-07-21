@@ -1,0 +1,78 @@
+---
+title: 应用管理
+description: 应用聚合根--Key 归属与渠道授权的核心
+---
+
+# 应用管理
+
+应用（Application）是 codingas.com 的**权限与行为聚合根**，承载 API Key 归属与渠道可见性。每个调用方 API Key 关联到一个应用，应用决定该 Key 能访问哪些渠道与模型。
+
+## 核心概念
+
+- **应用 = Key 归属 + 渠道授权**：API Key 挂在应用下，应用授权一组渠道
+- **应用级转移优先级**：同一渠道在不同应用可有不同 `priority`，控制故障转移顺序
+- **应用级超时与失败策略**：`timeout`、`failureStrategy`（`FAIL_FAST` / `FAIL_RETRY` / `FAIL_OVER`）
+
+应用字段：
+
+| 字段 | 说明 |
+|------|------|
+| `code` | 应用编码 |
+| `name` | 应用名称 |
+| `description` | 描述 |
+| `timeout` | 应用级超时（秒） |
+| `failureStrategy` | 失败策略 |
+
+## API
+
+`/api/v1/applications`（需 Sa-Token 登录态）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/v1/applications` | 创建应用 |
+| PUT | `/api/v1/applications/{id}` | 更新应用 |
+| GET | `/api/v1/applications/{id}` | 查询应用详情 |
+| GET | `/api/v1/applications` | 查询全部应用 |
+| DELETE | `/api/v1/applications/{id}` | 删除应用（级联清理渠道授权） |
+| GET | `/api/v1/applications/{id}/api-keys` | 查询应用下的 API Key |
+| GET | `/api/v1/applications/{id}/channels` | 查询应用授权的渠道及优先级 |
+| PUT | `/api/v1/applications/{id}/channels` | 更新渠道授权（含 priority） |
+
+### 创建应用
+
+```bash
+curl -X POST https://{gateway-host}/api/v1/applications \
+  -H "Authorization: Bearer <sa-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"code":"app-demo","name":"演示应用","description":"示例"}'
+```
+
+### 授权渠道并设置优先级
+
+```bash
+curl -X PUT https://{gateway-host}/api/v1/applications/1/channels \
+  -H "Authorization: Bearer <sa-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"channels":[{"channelId":1,"priority":10},{"channelId":2,"priority":20}]}'
+```
+
+:::note[priority 语义]
+`priority` **数值越小越优先**（默认 100）。`PriorityRouter` 按应用级 priority 升序排序候选渠道，故障转移时从最小 priority 开始逐个尝试。同一渠道在不同应用可设不同 priority，实现应用级转移顺序。详见 [路由设计](/admin/routing/)。
+:::
+
+## 控制台操作
+
+控制台 **Applications** 模块：
+
+1. 创建 / 编辑应用（code / name / description）
+2. 点击应用进入详情，管理其下的 API Key
+3. 点击"渠道管理"（ChannelManageModal），勾选授权渠道并设置优先级
+
+详见 [控制台快速上手](/console-guide/)。
+
+## 相关概念
+
+- [渠道管理](/admin/channels/)
+- [调用方密钥管理](/admin/apikeys/)
+- [路由设计](/admin/routing/)
+- [容灾与高可用](/admin/resilience/)

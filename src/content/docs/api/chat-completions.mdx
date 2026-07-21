@@ -1,0 +1,217 @@
+---
+title: 对话补全 API
+description: POST /v1/chat/completions（OpenAI 兼容）
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+# 对话补全 API
+
+`POST /v1/chat/completions` 是核心调用端点，完全兼容 OpenAI Chat Completions API，可直接使用 OpenAI 官方 SDK。
+
+## 认证
+
+| Header | 值 |
+|--------|----|
+| `Authorization` | `Bearer <api-key>` |
+| `Content-Type` | `application/json` |
+
+API Key 获取与鉴权流程见 [认证与调用](/developer/auth-call/)。
+
+## 请求参数
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `model` | string | 是 | 模型 ID，如 `gpt-4o`，可用模型见 [模型与定价](/developer/models-pricing/) |
+| `messages` | array | 是 | 消息数组，每项含 `role`（`system`/`user`/`assistant`/`tool`）与 `content` |
+| `max_tokens` | integer | 否 | 最大生成 token 数 |
+| `temperature` | number | 否 | 采样温度 |
+| `stop` | array | 否 | 停止序列 |
+| `frequency_penalty` | number | 否 | 频率惩罚 |
+| `presence_penalty` | number | 否 | 存在惩罚 |
+| `response_format` | object | 否 | JSON 模式，`{"type":"json_object"}` |
+| `seed` | integer | 否 | 随机种子 |
+| `tools` | array | 否 | Function Calling 工具定义 |
+| `tool_choice` | string | 否 | 工具选择（`auto` / `none` / 工具名） |
+| `stream` | boolean | 否 | 是否流式，默认 `false` |
+
+:::note[字段限制]
+- **不支持的字段**：`top_p`、`n`、`logit_bias`、`user`（实体类未定义，传入会被忽略）
+- **多模态限制**：`messages[].content` 为 String 类型，不支持 `image_url` 数组形式的多模态输入。多模态请使用 [Anthropic 消息端点](/api/messages/)。
+- **`tool_choice`**：仅支持字符串形式（`auto` / `none` / 工具名），不支持 `{type:"function",function:{name}}` 对象形式。
+:::
+
+## 响应
+
+### 200 OK
+
+```json
+{
+  "id": "chatcmpl-xxx",
+  "choices": [
+    {
+      "index": 0,
+      "message": { "role": "assistant", "content": "你好！" },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": { "prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15 }
+}
+```
+
+流式响应（`stream: true`）以 SSE 返回，每个片段为 `data: <chunk>\n\n`，以 `data: [DONE]` 结束。
+
+## HTTP 状态码
+
+| 状态码 | 说明 | 响应格式 |
+|--------|------|---------|
+| 200 | 成功 | OpenAI 格式 |
+| 400 | 请求错误（协议校验失败） | OpenAI 错误格式 |
+| 401 | API Key 无效 | ApiResponse 格式 |
+| 403 | 权限不足（应用未授权该渠道） | ApiResponse 格式 |
+| 429 | 限流 | ApiResponse 格式 |
+| 500 | 服务器错误 | ApiResponse 格式 |
+| 502 | 上游 Provider 错误 | ApiResponse 格式 |
+| 503 | 熔断开启 | ApiResponse 格式 |
+
+错误格式详见 [错误码与重试](/developer/errors/)。
+
+## 场景示例
+
+### 基础对话
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl https://{gateway-host}/v1/chat/completions \
+  -H "Authorization: Bearer sk-xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"你好"}]}'
+```
+</TabItem>
+<TabItem label="Python">
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="https://{gateway-host}/v1", api_key="sk-xxx")
+resp = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "你好"}],
+)
+print(resp.choices[0].message.content)
+```
+</TabItem>
+<TabItem label="JavaScript">
+```javascript
+import OpenAI from 'openai';
+
+const client = new OpenAI({ baseURL: 'https://{gateway-host}/v1', apiKey: 'sk-xxx' });
+const resp = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: '你好' }],
+});
+console.log(resp.choices[0].message.content);
+```
+</TabItem>
+</Tabs>
+
+### 流式响应
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl https://{gateway-host}/v1/chat/completions \
+  -H "Authorization: Bearer sk-xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"讲个故事"}],"stream":true}'
+```
+</TabItem>
+<TabItem label="Python">
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="https://{gateway-host}/v1", api_key="sk-xxx")
+stream = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "讲个故事"}],
+    stream=True,
+)
+for chunk in stream:
+    print(chunk.choices[0].delta.content or "", end="")
+```
+</TabItem>
+<TabItem label="JavaScript">
+```javascript
+import OpenAI from 'openai';
+
+const client = new OpenAI({ baseURL: 'https://{gateway-host}/v1', apiKey: 'sk-xxx' });
+const stream = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: '讲个故事' }],
+  stream: true,
+});
+for await (const chunk of stream) {
+  process.stdout.write(chunk.choices[0]?.delta?.content || '');
+}
+```
+</TabItem>
+</Tabs>
+
+### Function Calling
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl https://{gateway-host}/v1/chat/completions \
+  -H "Authorization: Bearer sk-xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model":"gpt-4o",
+    "messages":[{"role":"user","content":"北京天气如何？"}],
+    "tools":[{"type":"function","function":{"name":"get_weather","description":"获取天气","parameters":{"type":"object","properties":{"location":{"type":"string"}},"required":["location"]}}}],
+    "tool_choice":"auto"
+  }'
+```
+</TabItem>
+<TabItem label="Python">
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="https://{gateway-host}/v1", api_key="sk-xxx")
+resp = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "北京天气如何？"}],
+    tools=[{
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "获取天气",
+            "parameters": {"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]},
+        },
+    }],
+    tool_choice="auto",
+)
+print(resp.choices[0].message.tool_calls)
+```
+</TabItem>
+<TabItem label="JavaScript">
+```javascript
+import OpenAI from 'openai';
+
+const client = new OpenAI({ baseURL: 'https://{gateway-host}/v1', apiKey: 'sk-xxx' });
+const resp = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: '北京天气如何？' }],
+  tools: [{ type: 'function', function: { name: 'get_weather', description: '获取天气', parameters: { type: 'object', properties: { location: { type: 'string' } }, required: ['location'] } } }],
+  tool_choice: 'auto',
+});
+console.log(resp.choices[0].message.tool_calls);
+```
+</TabItem>
+</Tabs>
+
+## 下一步
+
+- Anthropic 风格调用：[Anthropic 消息 API](/api/messages/)
+- 协议互转：[协议转换](/api/protocol-convert/)
+- 更多示例：[调用示例](/developer/examples/)

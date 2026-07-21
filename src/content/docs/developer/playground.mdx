@@ -1,0 +1,41 @@
+---
+title: Playground 体验
+description: 在控制台在线调试模型调用
+---
+
+# Playground 体验
+
+Playground 位于控制台 **Quickstart** 模块，支持在线调试模型调用，无需编写代码即可验证模型行为与渠道可用性。
+
+## 功能
+
+- **模型选择**：从模型卡片浏览，按能力标签（`vision` / `functionCalling` / `streaming`）筛选
+- **参数配置**：设置 system prompt、temperature、max_tokens 等
+- **流式输出**：实时查看 SSE 流式响应
+- **用量统计**：显示输入 / 输出 Token 与耗时
+- **代码生成**：将当前调试配置一键生成 cURL / Python / Node / Java 代码片段，支持 OpenAI / Anthropic 双协议
+
+## 典型流程
+
+1. 登录控制台，进入 **Quickstart** 模块
+2. 在模型卡片中选择目标模型
+3. 选择已有 API Key 或新建
+4. 在 Playground 输入 prompt，发送请求
+5. 查看响应内容、Token 用量与耗时
+6. 调试满意后，点击"生成代码"复制对应语言的集成代码
+
+## 协议切换
+
+Playground 支持以 OpenAI 或 Anthropic 协议调用同一模型，生成的代码片段会自动适配所选协议：
+
+| 协议 | 端点 | 认证 Header |
+|------|------|------------|
+| OpenAI | `POST /v1/chat/completions` | `Authorization: Bearer` |
+| Anthropic | `POST /anthropic/v1/messages` | `x-api-key` |
+
+> 协议转换由网关 `ProtocolConverter` 完成，调用方可用任一协议调用任一上游模型。详见 [协议转换](/api/protocol-convert/)。
+
+## 下一步
+
+- 将生成的代码集成到应用：[SDK 与集成](/developer/sdk/)
+- 了解端点细节：[API 参考](/api/chat-completions/)

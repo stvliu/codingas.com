@@ -1,0 +1,82 @@
+---
+title: 模型与定价
+description: 内置供应商、模型能力矩阵与定价查询
+---
+
+# 模型与定价
+
+## 内置供应商
+
+codingas.com 内置 21 个主流模型供应商，开箱即用：
+
+| 供应商 | 说明 |
+|--------|------|
+| OpenAI | GPT 系列 |
+| Anthropic | Claude 系列 |
+| Google | Gemini 系列 |
+| DeepSeek | 深度求索 |
+| 通义千问 | 阿里 Qwen |
+| 月之暗面 | Kimi |
+| 智谱 AI | GLM |
+| 百川智能 | Baichuan |
+| MiniMax | abab 系列 |
+| 腾讯混元 | Hunyuan |
+| 火山引擎 | 豆包 Doubao |
+| 百度文心 | ERNIE |
+| 科大讯飞 | 星火 Spark |
+| 华为盘古 | Pangu |
+| Azure OpenAI | Azure 部署的 OpenAI |
+| AWS Bedrock | Bedrock 托管模型 |
+| 360 智脑 | 360Zhinao |
+| 零一万物 | Yi |
+| Mistral AI | Mistral |
+| 阶跃星辰 | Step |
+| xAI | Grok |
+
+> 供应商元数据位于 `gateway-boot/src/main/resources/data/builtin/vendors/`，可通过控制台 [渠道管理](/admin/channels/) 接入与配置。
+
+## 模型能力矩阵
+
+模型按能力标签分类，控制台与 Plan Catalog API 支持按能力筛选：
+
+| 能力标签 | 说明 |
+|---------|------|
+| `streaming` | 支持流式响应 |
+| `functionCalling` | 支持 Function Calling / Tools |
+| `vision` | 支持多模态视觉输入 |
+
+> **多模态限制**：OpenAI 兼容端点的 `messages[].content` 当前为 String 类型，`image_url` 数组形式的多模态输入暂不支持；Anthropic 端点的 `content` 为 Object 数组，支持多模态。详见 [对话补全 API](/api/chat-completions/)。
+
+## 模型发现 API
+
+调用 `GET /v1/models` 获取当前 API Key 可见的模型列表（OpenAI 兼容格式）：
+
+```bash
+curl https://{gateway-host}/v1/models \
+  -H "Authorization: Bearer sk-xxx"
+```
+
+```json
+{
+  "object": "list",
+  "data": [
+    { "id": "gpt-4o", "object": "model", "created": 1700000000, "ownedBy": "openai" }
+  ]
+}
+```
+
+> 可见性基于 API Key 关联的 `applicationId`，仅返回该应用授权渠道下的可见模型。端点细节见 [模型列表 API](/api/models/)。
+
+## 定价查询
+
+通过 Plan Catalog API 查询套餐与定价（管理 API，需登录态）：
+
+| 端点 | 说明 |
+|------|------|
+| `GET /api/v1/plan-catalogs/providers` | 供应商目录 |
+| `GET /api/v1/plan-catalogs` | 套餐目录 |
+| `GET /api/v1/plan-catalogs/{planCode}` | 套餐详情 |
+| `GET /api/v1/plan-catalogs/{planCode}/pricing` | 套餐定价 |
+| `GET /api/v1/plan-catalogs/models` | 模型列表（支持 `keyword` / `capability` 过滤） |
+
+控制台 **Catalog** 模块提供可视化浏览。管理 API 总览见 [管理 API 索引](/api/admin-index/)。

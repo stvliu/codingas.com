@@ -1,0 +1,124 @@
+---
+title: 错误码与重试
+description: HTTP 状态码、错误响应格式与调用方重试建议
+---
+
+# 错误码与重试
+
+## HTTP 状态码
+
+| 状态码 | 含义 | 触发场景 | 调用方建议 |
+|--------|------|----------|------------|
+| `400` | 请求错误 | 协议校验失败、请求体非法 | 修正请求，**不重试** |
+| `401` | 认证失败 | API Key 缺失、无效或已失效 | 检查 Key，**不重试** |
+| `403` | 权限不足 | Key 无权访问该模型 / 渠道 | 核对应用渠道授权，**不重试** |
+| `404` | 资源不存在 | 路径错误、模型未找到 | 核对端点路径，**不重试** |
+| `429` | 限流 | 触发令牌桶限流或上游限流 | 退避后重试 |
+| `500` | 服务器错误 | 网关内部异常 | 稍后重试 |
+| `502` | 上游错误 | Provider 返回错误 | 切换模型或稍后重试 |
+| `503` | 熔断开启 | 端点熔断器处于 OPEN | 稍后重试 |
+
+## 错误响应格式
+
+codingas.com 根据请求端点返回**两种**错误格式，调用方需分别处理。
+
+### OpenAI 兼容端点
+
+`POST /v1/chat/completions`、`GET /v1/models` 的协议校验错误返回 OpenAI 标准格式：
+
+```json
+{
+  "error": {
+    "message": "messages 字段不能为空",
+    "type": "invalid_request_error",
+    "code": "invalid_request"
+  }
+}
+```
+
+### Anthropic 兼容端点
+
+`POST /anthropic/v1/messages` 的协议校验错误返回 Anthropic 标准格式：
+
+```json
+{
+  "type": "error",
+  "error": {
+    "type": "invalid_request_error",
+    "message": "messages 字段不能为空"
+  }
+}
+```
+
+### 其他异常
+
+鉴权失败、限流、熔断、上游错误、服务器内部错误等返回网关统一格式 `ApiResponse`：
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "请求过于频繁，请稍后重试"
+  },
+  "traceId": "a1b2c3d4-...",
+  "timestamp": "2026-07-20T10:30:00Z"
+}
+```
+
+> `traceId` 可用于结合 [可观测性](/admin/observability/) 排查全链路。建议调用方日志记录 `traceId` 以便反馈问题时提供。
+
+## 网关内部重试
+
+网关在调用上游 Provider 时会根据错误类型自动重试，**对调用方透明**。调用方收到的是最终结果或最终错误，无需感知中间重试。
+
+重试策略由 `RetryExecutor` 按错误类型选择：
+
+| 错误类型（`ProviderErrorType`） | 含义 | 策略 |
+|--------------------------------|------|------|
+| `RATE_LIMIT_ERROR` | 上游限流 | 限流退避重试 |
+| `TIMEOUT_ERROR` | 上游超时 | 快速重试 |
+| `SERVICE_UNAVAILABLE` | 上游不可用 | 服务不可用重试 |
+| `QUOTA_EXCEEDED` | 上游额度耗尽 | 不重试，触发渠道级故障转移 |
+| `INVALID_REQUEST` | 请求非法 | 不重试 |
+| `UPSTREAM_ERROR` | 上游其他错误 | 指数退避重试 |
+
+重试与故障转移的关系详见 [容灾与高可用](/admin/resilience/)。
+
+## 调用方重试建议
+
+虽然网关内部已重试，但调用方仍建议对最终返回的错误做适度重试：
+
+- `429`：指数退避重试（如 1s / 2s / 4s），最多 3 次
+- `503`：熔断恢复需要时间，间隔 5–10s 后重试
+- `502`：可切换备选模型重试，或退避后重试
+- `500`：退避后重试 1–2 次，持续失败应反馈
+- `400` / `401` / `403` / `404`：**不重试**，修正请求或鉴权
+
+```python
+import time
+import requests
+
+def call_with_retry(url, headers, payload, max_retries=3):
+    for attempt in range(max_retries):
+        resp = requests.post(url, headers=headers, json=payload, timeout=60)
+        if resp.status_code == 200:
+            return resp.json()
+        if resp.status_code in (400, 401, 403, 404):
+            raise Exception(f"不可重试错误 {resp.status_code}: {resp.text}")
+        if attempt < max_retries - 1:
+            time.sleep(2 ** attempt)  # 指数退避: 1s, 2s, 4s
+    raise Exception(f"重试 {max_retries} 次后仍失败: {resp.status_code}")
+```
+
+## 故障排查
+
+遇到持续错误时，按以下顺序排查：
+
+1. **401 / 403**：核对 API Key 与应用渠道授权（[调用方密钥管理](/admin/apikeys/)、[应用管理](/admin/applications/)）
+2. **404**：核对端点路径，注意 Anthropic 端点为 `/anthropic/v1/messages`（非 `/v1/messages`）
+3. **429**：检查 Key 限流配置与上游限流
+4. **502 / 503**：查看控制台熔断器大盘与容灾事件（[容灾与高可用](/admin/resilience/)）
+5. **500**：记录 `traceId` 并反馈
+
+更多排查指引见 [故障排查](/reference/troubleshooting/)。
