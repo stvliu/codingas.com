@@ -28,7 +28,7 @@ pnpm lint:linkcheck   # 扫描 dist/ 下 HTML 内部链接是否断链（必须�
 国际化分两条独立轨道，**不要混用**：
 
 - **文档站**（`src/content/docs/`）：走 Starlight 原生 locale。`astro.config.ts` 当前**只配 `root`（简体中文）**，刻意不配 `en`，以避免未翻译内容产生 fallback 噪音。新增文档语种需在 `astro.config.ts` 的 `starlight.locales` 注册。
-- **营销页**（`src/pages/`）：手动双轨。中文页在 `src/pages/`，英文页在 `src/pages/en/`（目录结构镜像）。文案集中在 `src/data/i18n/*.ts`，导出 `{ zh, en }` 对象，页面用 `const t = home.zh` / `home.en` 取值。结构化数据（如 `src/data/editionDiff.ts`、`src/data/homeFeatures.ts`）不带 i18n，中英共用。
+- **营销页**（`src/pages/`）：手动双轨。中文页在 `src/pages/`，英文页在 `src/pages/en/`（目录结构镜像）。文案集中在 `src/data/i18n/*.ts`，导出 `{ zh, en }` 对象，页面用 `const t = home.zh` / `home.en` 取值。结构化数据（如 `src/data/homeFeatures.ts`）不带 i18n，中英共用。
 
 新增营销页时记得**同时建中文与 `/en/` 英文两份**，否则会造成语言缺口。
 
@@ -43,7 +43,7 @@ pnpm lint:linkcheck   # 扫描 dist/ 下 HTML 内部链接是否断链（必须�
 
 - 文档为 `.mdx`/`.md`，frontmatter 只需 `title` 与 `description`（Starlight schema，见 `src/content.config.ts`，Astro 6 Content Layer API）。
 - 侧边栏在 `astro.sidebar.ts` 用 `slug`（不带前导斜杠）引用文档。新增文档后必须在此登记，否则不会出现在导航。
-- 企业版专属条目附 `badge: enterpriseBadge`（绿色"企业版"标签）。全部条目均渲染，不做条件隐藏。
+- 站点内容不区分版本（已统一为单一产品），侧边栏全部条目均渲染，不做条件隐藏与版本标签。
 - 旧 `docs/` 链接重定向映射在 `astro.redirects.ts`（当前为空，按需追加）。
 
 ### Slug 约定（强制）

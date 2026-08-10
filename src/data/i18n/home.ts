@@ -5,7 +5,6 @@ export const home = {
       title: '企业级大模型网关 · 更合规、更安全、更智能、更易用',
       subtitle: 'OpenAI / Anthropic 双标准 API，统一接入 50+ 主流大模型，智能路由、语义缓存、全链路可观测。',
       cta: '快速开始',
-      secondaryCta: '版本对比',
     },
     differentiators: [
       { title: '更易用', desc: '开箱即用（预置模板）+ 零学习成本（OpenAI 兼容）+ 运维友好（智能诊断）' },
@@ -19,13 +18,6 @@ export const home = {
       routing: '智能路由与降级：额度不足或模型不可用时自动切换，保障业务连续性。',
       security: '安全合规：认证、限流、脱敏、审计四层检查，密钥加密存储。',
     },
-    products: {
-      title: '产品形态',
-      items: [
-        { name: '标准版', desc: 'Apache-2.0 开源，单机即可起步', href: '/features/' },
-        { name: '企业版', desc: '分布式部署 + 高级安全 + 商业支持', href: '/standard-vs-enterprise/' },
-      ],
-    },
     console: { title: '控制台预览', placeholder: '控制台截图（P0 占位，待补充真实截图）' },
     features: { title: '8 大能力域' },
     cta: { title: '开始使用 codingas.com', button: '查看文档' },
@@ -35,7 +27,6 @@ export const home = {
       title: 'Enterprise LLM Gateway · Compliant, Secure, Intelligent, Easy',
       subtitle: 'OpenAI / Anthropic dual-standard APIs, unified access to 50+ models, smart routing, semantic cache, full observability.',
       cta: 'Get Started',
-      secondaryCta: 'Compare Editions',
     },
     differentiators: [
       { title: 'Easier', desc: 'Out-of-the-box templates + zero learning curve (OpenAI-compatible) + ops-friendly diagnostics' },
@@ -48,13 +39,6 @@ export const home = {
       dualProtocol: 'Dual protocol: OpenAI and Anthropic API standards, zero-cost protocol conversion.',
       routing: 'Smart routing & failover: auto-switch on quota exhaustion or model unavailability.',
       security: 'Security & compliance: auth, rate-limit, masking, audit - four-layer checks, encrypted keys.',
-    },
-    products: {
-      title: 'Editions',
-      items: [
-        { name: 'Standard', desc: 'Apache-2.0 open-source, single-node to start', href: '/features/' },
-        { name: 'Enterprise', desc: 'Distributed deployment + advanced security + support', href: '/en/standard-vs-enterprise/' },
-      ],
     },
     console: { title: 'Console Preview', placeholder: 'Console screenshots (placeholder, real shots pending)' },
     features: { title: '8 Capability Domains' },

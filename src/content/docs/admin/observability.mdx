@@ -52,17 +52,17 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
 | Jaeger | 16686 | 链路追踪查询 |
 | OTel Collector | 4317 / 4318 | Trace 接收与转发 |
 
-:::note[企业版能力]
-监控栈组件可自部署使用。**预置 Grafana 仪表盘**（配置好的官方面板）与 **Jaeger 官方集成**为企业版规划能力，详见 [产品路线图](/reference/roadmap/)。标准版可基于 Prometheus 指标自建 Grafana 面板。
+:::note[规划能力]
+监控栈组件可自部署使用。**预置 Grafana 仪表盘**（配置好的官方面板）与 **Jaeger 官方集成**为规划能力，详见 [产品路线图](/reference/roadmap/)。当前可基于 Prometheus 指标自建 Grafana 面板。
 :::
 
 ## 功能清单
 
-| 功能 | 标准版 | 企业版 |
-|---|---|---|
-| Trace ID（全链路追踪） | ✅ | ✅ |
-| 结构化日志（JSON 格式） | ✅ | ✅ |
-| Prometheus 指标导出 | ✅ | ✅ |
-| Actuator 健康检查 | ✅ | ✅ |
-| 预置 Grafana 仪表盘 | - | 规划中 |
-| Jaeger 官方集成 | - | 规划中 |
+| 功能 | 状态 |
+|---|---|
+| Trace ID（全链路追踪） | ✅ |
+| 结构化日志（JSON 格式） | ✅ |
+| Prometheus 指标导出 | ✅ |
+| Actuator 健康检查 | ✅ |
+| 预置 Grafana 仪表盘 | 规划中 |
+| Jaeger 官方集成 | 规划中 |

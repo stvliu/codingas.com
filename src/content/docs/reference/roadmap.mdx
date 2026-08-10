@@ -5,13 +5,13 @@ description: codingas.com 已规划但尚未实现的能力清单
 
 # 产品路线图
 
-本页集中列出 codingas.com **已规划但当前版本尚未实现**的能力。下列内容均处于设计或规划阶段，不代表最终交付承诺与时间表。已实现能力请参阅各功能文档，企业版专属能力以 <span class="badge success">企业版</span> 标注。
+本页集中列出 codingas.com **已规划但当前版本尚未实现**的能力。下列内容均处于设计或规划阶段，不代表最终交付承诺与时间表。已实现能力请参阅各功能文档。
 
 > 若某项能力对你至关重要，欢迎通过 [联系我们](/contact-us/) 反馈，帮助调整优先级。
 
-## 企业版规划能力
+## 规划能力
 
-### 语义缓存 <span class="badge success">企业版</span>
+### 语义缓存
 
 基于向量相似度匹配相似请求并返回缓存结果，目标降低成本 30%+。
 
@@ -21,7 +21,7 @@ description: codingas.com 已规划但尚未实现的能力清单
 
 > 当前状态：设计规格阶段，源码尚未实现，未引入 pgvector 依赖。
 
-### MCP 协议 <span class="badge success">企业版</span>
+### MCP 协议
 
 为模型提供标准化上下文与工具接入，支持 Claude / Cursor / Dify 等 MCP 客户端。
 
@@ -33,20 +33,20 @@ description: codingas.com 已规划但尚未实现的能力清单
 
 > 当前状态：设计端点阶段，源码尚未实现。
 
-### 代理配置 <span class="badge success">企业版</span>
+### 代理配置
 
 Provider 出站流量经 HTTP/S 或 SOCKS5 代理，满足合规与网络隔离需求。
 
 > 当前状态：规划中，尚未实现。
 
-### 可观测性增强 <span class="badge success">企业版</span>
+### 可观测性增强
 
 - Grafana 预置仪表盘（延迟 / QPS / Token / 费用）
 - Jaeger 分布式追踪
 
-> 当前状态：标准版已暴露 Prometheus 指标与 OpenTelemetry Trace，Grafana 仪表盘与 Jaeger 集成为企业版规划项。
+> 当前状态：已暴露 Prometheus 指标与 OpenTelemetry Trace，Grafana 仪表盘与 Jaeger 集成为规划项。
 
-### 企业级配额与审计 <span class="badge success">企业版</span>
+### 配额与审计
 
 - 用户 × 渠道限额、请求次数配额
 - 国密算法（SM2/SM3/SM4）、完整审计链（WORM）
