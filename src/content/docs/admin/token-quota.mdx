@@ -14,6 +14,8 @@ codingas.com 对每个请求分别统计输入/输出 Token，支持用户级配
 - **OpenAI**：输入取 `usage.prompt_tokens`，输出取 `usage.completion_tokens`
 - **Anthropic**：输入取 `usage.input_tokens`，输出取 `usage.output_tokens`
 
+提取的输入 / 输出 Token 随调用记录（`traceId`、模型、渠道、耗时、成败）一并写入 `call_logs` 表，供统计查询使用。
+
 ## 配额管理 API
 
 需会话认证（`Authorization: Bearer <token>`）。配额为**用户级**（关联用户，可选绑定 Provider/Model）。
@@ -49,11 +51,13 @@ curl -X POST http://localhost:8080/api/v1/token-limits \
 | `userId` | 配额归属用户（必填） |
 | `providerId` / `modelId` | 可选，绑定到特定供应商/模型（实现"用户×渠道"配额） |
 | `maxTokens` | 周期内 Token 上限 |
-| `periodType` | 周期：`MONTHLY` 等 |
+| `periodType` | 周期：`DAILY` / `WEEKLY` / `MONTHLY` / `TOTAL` |
 | `exceededAction` | 超限策略：`REJECT`（拒绝）或 `DOWNGRADE`（降级，需配 `switchModelId`） |
 | `switchModelId` | 降级时切换到的模型 |
 
-> ⚠️ **配额扣减尚未接入请求链路**：配额可配置与管理，但当前 Token 用量事件仅记日志，未实际扣减配额。即配额设置后暂不生效，后续版本将接入扣减逻辑。
+> 限额规则另有系统默认 / 用户自定义类型（`limitType`）与启停状态（`ACTIVE` / `SUSPENDED`）。
+
+> ⚠️ **配额扣减尚未接入请求链路**：配额可配置与管理，Token 用量也已随调用记录落库并参与统计，但请求路径上暂无限额校验与扣减逻辑，配额设置后暂不生效，后续版本将接入扣减。
 
 ## 用量查询
 
@@ -62,16 +66,19 @@ curl http://localhost:8080/api/v1/stats \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-返回概览统计（供应商数、渠道数、模型数、用户数、请求数、Token 用量）。
+返回概览统计（供应商数、渠道数、模型数、用户数、今日请求数与 Token 消耗）。统计数据源为 `call_logs` 调用记录，另有两个维度端点：
 
-> 当前 `/api/v1/stats` 的请求数与 Token 用量字段为占位数据，按维度查询的专用端点规划中。
+| 端点 | 说明 |
+|------|------|
+| `GET /api/v1/stats/trend?days=7` | 最近 N 天按天调用趋势（请求量与 Token，无数据日期补零） |
+| `GET /api/v1/stats/model-usage?limit=5` | 模型调用量分布 TopN |
 
 ## 功能清单
 
 | 功能 | 状态 |
 |---|---|
-| Token 计量（输入/输出分别统计） | ✅ |
-| Token 限额（用户级） | ✅（扣减接入中） |
+| Token 计量（输入/输出分别统计，随调用记录落库） | ✅ |
+| 用量统计与趋势查询 | ✅ |
+| Token 限额规则管理（用户级，可绑定供应商/模型） | ✅（运行时扣减尚未接入请求链路） |
 | API Key 级限额 | ❌（已移除） |
-| 用户×渠道限额 | 规划中 |
 | 请求次数配额 | 规划中 |

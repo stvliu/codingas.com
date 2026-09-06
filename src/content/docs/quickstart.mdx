@@ -92,7 +92,7 @@ curl -X POST http://localhost:8080/api/v1/user-api-keys \
 
 ## 5. 配置上游 Provider
 
-网关需要一个真实的上游模型 API Key（如 OpenAI、Anthropic、火山引擎等）才能转发请求。在管理后台【Provider 管理】添加供应商并填入上游 Key，详见 [Provider 管理](/admin/providers/)。
+网关需要一个真实的上游模型 API Key（如 OpenAI、Anthropic、火山引擎等）才能转发请求。在管理后台【渠道管理】创建渠道（选择内置供应商、填入上游凭证与端点），详见 [渠道管理](/admin/channels/)。
 
 > 未配置任何上游凭证时，调用会返回 `502` / 上游不可用错误。
 

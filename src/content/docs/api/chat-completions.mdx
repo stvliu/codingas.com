@@ -67,12 +67,12 @@ API Key 获取与鉴权流程见 [认证与调用](/developer/auth-call/)。
 |--------|------|---------|
 | 200 | 成功 | OpenAI 格式 |
 | 400 | 请求错误（协议校验失败） | OpenAI 错误格式 |
-| 401 | API Key 无效 | ApiResponse 格式 |
-| 403 | 权限不足（应用未授权该渠道） | ApiResponse 格式 |
-| 429 | 限流 | ApiResponse 格式 |
-| 500 | 服务器错误 | ApiResponse 格式 |
-| 502 | 上游 Provider 错误 | ApiResponse 格式 |
-| 503 | 熔断开启 | ApiResponse 格式 |
+| 401 | API Key 无效 | `{"code":"UNAUTHORIZED","message":...}` |
+| 403 | 权限不足（应用未授权该渠道）或 IP 黑名单 | `{"code":"ACCESS_DENIED","message":...}` |
+| 429 | 限流 | `{"error":{"code":"RATE_LIMIT_EXCEEDED","message":...}}` |
+| 500 | 服务器错误 | ApiResponse 格式（`INTERNAL_ERROR`） |
+| 502 | 上游 Provider 错误 | ApiResponse 格式（code 为错误类型名，如 `UPSTREAM_ERROR`、`MODEL_NOT_FOUND`） |
+| 503 | 熔断开启 | ApiResponse 格式（code 为 `UPSTREAM_ERROR`） |
 
 错误格式详见 [错误码与重试](/developer/errors/)。
 

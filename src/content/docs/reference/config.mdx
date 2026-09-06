@@ -52,7 +52,7 @@ spring:
 
 | 配置项 | 环境变量 | 默认值 | 说明 |
 |--------|---------|--------|------|
-| `gateway.security.encryption-key` | `GATEWAY_ENCRYPTION_KEY` | 空 | API Key 加密密钥（Base64 32 字节，生产必填） |
+| `gateway.security.encryption-key` | `ENCRYPTION_KEY` | 空 | API Key 加密密钥（Base64 32 字节，生产必填） |
 
 生成密钥：
 
@@ -60,7 +60,47 @@ spring:
 openssl rand -base64 32
 ```
 
-> 非开发 profile 未配置时启动抛 `ENCRYPTION_KEY_MISSING`。密钥丢失将导致已加密的上游 Key 无法解密。
+> 密钥获取顺序：配置属性 → 环境变量 `ENCRYPTION_KEY` → 开发环境临时密钥。`GATEWAY_ENCRYPTION_KEY` 仅在 `local` profile 的 yml 映射中生效。非开发 profile 未配置时启动抛 `ENCRYPTION_KEY_MISSING`。密钥丢失将导致已加密的上游 Key 无法解密。
+
+## 限流（API Key 级令牌桶）
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| `gateway.security.rate-limit.bucket-size` | `100` | 令牌桶容量 |
+| `gateway.security.rate-limit.refill-rate` | `10` | 每秒补充令牌数 |
+| `gateway.security.rate-limit.qps-threshold` | `1000` | QPS 阈值 |
+
+## 上游重试
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| `gateway.retry.max-attempts` | `3` | 默认最大重试次数 |
+| `gateway.retry.backoff-initial` | `1000`（ms） | 退避起始间隔 |
+| `gateway.retry.backoff-multiplier` | `2.0` | 退避倍率 |
+| `gateway.retry.retryable-status-codes` | `429,500,502,503` | 可重试状态码 |
+| `gateway.retry.rate-limit.*` | 5 次 / 2000ms 起 / 60s 封顶 | 上游限流专用策略 |
+| `gateway.retry.fast-retry.*` | 2 次 / 固定 500ms | 超时快速重试策略 |
+| `gateway.retry.service-unavailable.*` | 3 次 / 固定 5000ms | 服务不可用策略 |
+
+## 上游 HTTP 客户端
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| `webclient.connect-timeout` | `5000`（ms） | 连接超时 |
+| `webclient.read-timeout` | `60000`（ms） | 读取超时 |
+
+## 其他
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| `gateway.init.demo-data-enabled` | `false`（`local`/`dev` 为 `true`） | 是否加载示例数据 |
+| `gateway.actuator.health.public-access` | `true` | 健康检查公网可访问 |
+| `gateway.protocol.gemini.enabled` | `true` | Gemini 协议插件（上游适配扩展示例） |
+| `gateway.health.provider.stale-threshold` | `300s` | Provider 健康状态过期阈值 |
+| `gateway.health.provider.failure-threshold` | `3` | 连续失败熔断阈值 |
+| `gateway.health.provider.success-threshold` | `2` | 连续成功恢复阈值 |
+| `gateway.health.provider.probe-timeout` | `10s` | 健康探测超时 |
+| `spring.jpa.ddl-auto` | `update`（`postgresql` profile 为 `validate`） | Schema 同步策略 |
 
 ## Sa-Token 会话
 
@@ -81,12 +121,6 @@ openssl rand -base64 32
 | `/actuator/prometheus` | Prometheus 指标 |
 | `/actuator/info` | 应用信息 |
 
-## 初始化
-
-| 配置项 | 默认值 | 说明 |
-|--------|--------|------|
-| `gateway.init.demo-data-enabled` | `true`（local） | 是否加载示例数据 |
-
 ## Profile
 
 | Profile | 数据库 | Redis | 用途 |
@@ -97,4 +131,4 @@ openssl rand -base64 32
 | `standalone` | 同上 | Caffeine | 单机 |
 | `prod` | 同上 | 启用 | 生产 |
 
-完整环境变量清单另见 `deployments/docker/.env.example`。部署细节见 [安装部署](/deploy/)。
+完整占位符清单见 `gateway-boot/src/main/resources/application.yml` 中 `${ENV:默认值}` 定义。部署细节见 [安装部署](/deploy/)。

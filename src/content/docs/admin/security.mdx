@@ -13,10 +13,11 @@ codingas.com 遵循零信任安全架构，请求经过 IP 封禁、认证、限
 
 | 顺序 | 拦截器 | 职责 | 失败响应 |
 |------|--------|------|---------|
-| 1 | IP 黑名单 | 封禁 IP 拦截 | 403 `Access denied: IP blocked` |
-| 2 | API Key 认证 | `/v1/*` 路径校验调用方 Key | 401 `无效的 API Key` |
-| 3 | 会话认证 | `/api/v1/*` 路径校验 Sa-Token | 401 未登录 |
-| 4 | 限流 | API Key 级令牌桶 | 429 `RATE_LIMIT_EXCEEDED` |
+| 1 | IP 黑名单 | 封禁 IP 拦截（`/api/**`、`/v1/**`、`/anthropic/**`） | 403 `{"code":"ACCESS_DENIED","message":"Access denied: IP blocked"}` |
+| 2 | API Key 认证 | `/v1/*`、`/anthropic/*` 路径校验调用方 Key | 401 `{"code":"UNAUTHORIZED","message":...}` |
+| 3 | 会话认证 | `/api/v1/*` 路径校验 Sa-Token 登录态 | 401 未登录 |
+| 4 | 角色授权 | 管理端点按 ADMIN / USER 白名单放行（USER：模型 / 应用只读、体验中心、自己的 Key） | 403 `ACCESS_DENIED` |
+| 5 | 限流 | API Key 级令牌桶 | 429 `{"error":{"code":"RATE_LIMIT_EXCEEDED",...}}` |
 
 ## IP 黑名单
 
@@ -26,15 +27,16 @@ codingas.com 遵循零信任安全架构，请求经过 IP 封禁、认证、限
 
 ## 密钥加密
 
-所有上游 Provider Key 使用 **AES-256-GCM** 加密存储，密钥通过环境变量 `GATEWAY_ENCRYPTION_KEY` 注入：
+所有上游 Provider Key 使用 **AES-256-GCM** 加密存储，密钥获取顺序：`gateway.security.encryption-key` 配置属性 → 环境变量 `ENCRYPTION_KEY` → 开发环境临时密钥：
 
 ```bash
 # 生成 32 字节 Base64 密钥
 openssl rand -base64 32
-export GATEWAY_ENCRYPTION_KEY="<生成的密钥>"
+export ENCRYPTION_KEY="<生成的密钥>"
 ```
 
 - 生产环境（非 dev/local profile）必须配置，否则启动抛 `ENCRYPTION_KEY_MISSING`
+- 环境变量名为 `ENCRYPTION_KEY`；`GATEWAY_ENCRYPTION_KEY` 仅在 `local` profile 的 yml 映射中生效（详见 [安装部署](/deploy/)）
 - 调用方 API Key 不存明文：仅存前缀（`keyPrefix`）+ SHA-256 哈希，认证时按前缀查库再哈希比对
 
 ## 密钥脱敏
@@ -54,7 +56,7 @@ export GATEWAY_ENCRYPTION_KEY="<生成的密钥>"
 - IP 白名单（仅 DB 字段预留）
 - UA 过滤
 - 内容审核（`/v1/moderations`）
-- 国密算法（SM2/SM3/SM4，当前使用 AES-256）
+- 国密算法（SM2/SM3/SM4，当前使用 AES-256-GCM）
 - 完整审计链（WORM）
 
 ## 功能清单
@@ -62,12 +64,13 @@ export GATEWAY_ENCRYPTION_KEY="<生成的密钥>"
 | 功能 | 状态 |
 |---|---|
 | 认证中间件（Token 验证） | ✅ |
+| 角色授权（ADMIN / USER） | ✅ |
 | IP 黑名单 | ✅ |
 | IP 白名单 | 规划中 |
 | UA 过滤 | 规划中 |
 | PII 脱敏（规则已定义，执行待接入） | 规划中 |
 | 数据掩码策略 | ✅ |
 | 审计日志 | ✅ |
-| 密钥加密存储（AES-256） | ✅ |
+| 密钥加密存储（AES-256-GCM） | ✅ |
 | 国密算法（SM2/SM3/SM4） | 规划中 |
 | 完整审计链（WORM） | 规划中 |

@@ -5,7 +5,7 @@ description: 管理后台功能模块导览与典型操作路径
 
 # 控制台快速上手
 
-codingas.com 控制台是网关的可视化管理后台，基于 React + Ant Design 构建。本文导览 9 大功能模块，帮助管理员与开发者快速定位操作入口。
+codingas.com 控制台是网关的可视化管理后台，基于 React + Ant Design 构建，支持中文 / English 界面切换。本文导览 12 个功能模块，帮助管理员与开发者快速定位操作入口。
 
 ## 登录
 
@@ -29,10 +29,12 @@ codingas.com 控制台是网关的可视化管理后台，基于 React + Ant Des
 
 面向开发者的自助入口，四步完成首次调用：
 
-1. **模型卡片浏览**：按关键词搜索、按能力标签（vision / functionCalling / streaming）筛选模型
+1. **模型卡片浏览**：按关键词搜索模型
 2. **API Key 选择 / 创建**：选择已有 Key 或新建
 3. **代码片段生成**：自动生成 cURL / Python / Node / Java 示例，支持 OpenAI / Anthropic 双协议
 4. **Playground 试玩**：在线调试，支持流式，显示 Token 用量与耗时
+
+> 按能力标签（vision / functionCalling）筛选模型在 **模型目录（Catalog）** 模块进行。
 
 详见 [Playground 体验](/developer/playground/)。
 
@@ -51,45 +53,61 @@ codingas.com 控制台是网关的可视化管理后台，基于 React + Ant Des
 渠道是上游接入的核心，功能最丰富的模块：
 
 - **创建向导**：引导式新建渠道
+- **复制渠道**：一键复制渠道（本体 + 端点 + 模型实例 + 可选凭证）
 - **详情抽屉**：查看 / 编辑渠道全貌
 - **分组列表 / 表格视图**：按 Provider 分组或平铺
 - **熔断器**：一键强制熔断 / 恢复端点
 - **连通性测试**：验证渠道可用性
-- **凭证管理**：Provider API Key 的增删与轮换
+- **凭证管理**：上游 API Key 的增删与轮换
 - **端点管理**：配置协议端点
 - **模型映射**：上游模型名与网关模型名的映射
-- **配额设置**：渠道级配额
-- **批量导入 / 导出**：批量管理渠道
+- **批量导入 / 导出**：批量管理渠道（导出为 YAML，不含凭证明文）
+
+> 原 Provider 独立页面已并入渠道管理（控制台 `/providers` 路由会重定向到 `/channels`），供应商元数据在创建渠道时选择。
 
 详见 [渠道管理](/admin/channels/)。
 
 ### 5. 模型管理（Models）
 
-维护网关对外暴露的模型清单：创建模型、编辑模型属性、关联渠道。
+维护网关对外暴露的模型清单：创建 / 编辑模型、关联渠道、**复制模型**（继承规格快速生成新模型）、解锁与状态管理；已废弃模型带 `DEPRECATED` 标签（由模型生命周期自动探测标记）。
 
 详见 [模型与定价](/developer/models-pricing/)。
 
 ### 6. 用户管理（Users）
 
-管理员管理用户账号与角色（ADMIN / USER），并为用户分配 API Key。
+管理员管理用户账号与角色（ADMIN / USER）、启用 / 停用账号、重置密码，并为用户分配 API Key。
 
 详见 [用户与认证](/admin/users/)。
 
-### 7. 下游密钥（ApiKeys）
+### 7. 调用方密钥（ApiKeys）
 
-调用方 API Key 的集中管理：创建 / 查询 / 删除 / 配置额度、模型白名单、IP 限制、过期时间。
+调用方 API Key 的集中管理：创建 / 查询 / 删除，Key 绑定用户与应用（模型可见范围由应用渠道授权决定）。
 
 详见 [调用方密钥管理](/admin/apikeys/)。
 
-### 8. 套餐目录（Catalog）
+### 8. 模型目录（Catalog）
 
-浏览供应商、套餐与模型定价目录，对应 `PlanCatalogController` 查询能力。
+浏览供应商、套餐与模型定价目录，对应 `PlanCatalogController` 查询能力，支持按能力标签（vision / functionCalling）筛选模型。
 
 ### 9. 容灾大盘（Resilience）
 
 端点级熔断器状态大盘（CLOSED / OPEN / HALF_OPEN），查看容灾事件与故障转移记录。
 
 详见 [容灾与高可用](/admin/resilience/)。
+
+### 10. 审计日志（AuditLogs）
+
+管理端写操作（创建 / 更新 / 删除）的审计记录查询：操作人、动作、资源、来源 IP 与结果，支持分页检索与按时间清理。
+
+### 11. Token 限额（TokenLimits）
+
+用户 / 供应商 / 模型维度的 Token 限额规则管理：创建规则、设置周期与超限动作、重置用量。
+
+详见 [Token 计量与配额](/admin/token-quota/)。
+
+### 12. 系统设置（Settings）
+
+系统级配置键值（`system_settings` 表）的查看与修改，如探测周期、废弃检测阈值等运行参数。
 
 ## 典型操作路径
 
@@ -99,6 +117,6 @@ codingas.com 控制台是网关的可视化管理后台，基于 React + Ant Des
 | 接入新上游 | Channels → 创建向导 → 配置凭证 / 端点 / 模型映射 → 连通性测试 |
 | 给应用授权渠道 | Applications → 选应用 → 渠道管理 → 勾选渠道并设优先级 |
 | 排查调用失败 | Resilience → 看熔断状态 → 查容灾事件 → 结合 traceId 查日志 |
-| 限制某 Key 用量 | ApiKeys → 选 Key → 配额 / 模型白名单 / IP 限制 |
+| 限制某用户用量 | TokenLimits → 创建限额规则（用户 / 供应商 / 模型维度） |
 
 > 控制台所有写操作均通过 [管理 API](/api/admin-index/) 实现，本文档不逐项截图，请以实际界面为准。

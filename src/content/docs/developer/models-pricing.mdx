@@ -33,11 +33,11 @@ codingas.com 内置 21 个主流模型供应商，开箱即用：
 | 阶跃星辰 | Step |
 | xAI | Grok |
 
-> 供应商元数据位于 `gateway-boot/src/main/resources/data/builtin/vendors/`，可通过控制台 [渠道管理](/admin/channels/) 接入与配置。
+> 供应商元数据位于 `gateway-boot/src/main/resources/data/builtin/vendors/`（预置 160+ 主流模型），另内置模型目录规格见 `gateway-boot/src/main/resources/catalog/model-specs.json`（70+ 模型规格），可通过控制台 [渠道管理](/admin/channels/) 接入与配置。
 
 ## 模型能力矩阵
 
-模型按能力标签分类，控制台与 Plan Catalog API 支持按能力筛选：
+模型按能力标签分类，控制台模型目录（Catalog）页面与 Plan Catalog API 支持按能力筛选：
 
 | 能力标签 | 说明 |
 |---------|------|
@@ -60,7 +60,7 @@ curl https://{gateway-host}/v1/models \
 {
   "object": "list",
   "data": [
-    { "id": "gpt-4o", "object": "model", "created": 1700000000, "ownedBy": "openai" }
+    { "id": "gpt-4o", "object": "model", "created": 1700000000, "ownedBy": "system" }
   ]
 }
 ```

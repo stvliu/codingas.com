@@ -44,8 +44,9 @@ curl https://{gateway-host}/anthropic/v1/messages \
 
 ## 转换限制
 
-- 字段映射遵循各协议规范，部分独有字段在转换中可能丢失
+- 字段映射遵循各协议规范，部分独有字段在转换中可能丢失；响应转换针对 OpenAI ↔ Anthropic 两个方向定向实现
 - **多模态**：OpenAI 端点 `content` 为 String，不支持 `image_url`；多模态输入请使用 Anthropic 端点
 - 协议互转不改变路由与容灾行为，故障转移与熔断按渠道端点独立工作
+- 上游协议另支持 Gemini 插件（`gateway.protocol.gemini.enabled`，默认启用）作为多协议扩展示例；对外入站端点当前仅 OpenAI 与 Anthropic 两种
 
 详见 [对话补全 API](/api/chat-completions/) 与 [Anthropic 消息 API](/api/messages/)。

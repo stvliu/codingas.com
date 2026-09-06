@@ -27,14 +27,14 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 {
   "object": "list",
   "data": [
-    { "id": "gpt-4o", "object": "model", "created": 1700000000, "ownedBy": "openai" },
-    { "id": "claude-sonnet-4-20250514", "object": "model", "created": 1700000000, "ownedBy": "anthropic" }
+    { "id": "gpt-4o", "object": "model", "created": 1700000000, "ownedBy": "system" },
+    { "id": "claude-sonnet-4-20250514", "object": "model", "created": 1700000000, "ownedBy": "system" }
   ]
 }
 ```
 
 :::note[字段说明]
-`ownedBy` 为网关实际返回字段（非 OpenAI 标准的 `owned_by`），使用 OpenAI SDK 严格模式时可能需要适配。
+`ownedBy` 为网关实际返回字段（非 OpenAI 标准的 `owned_by`），当前固定返回 `"system"`；使用 OpenAI SDK 严格模式时可能需要适配。
 :::
 
 ## 可见性

@@ -43,7 +43,7 @@ Provider 是供应商元数据（名称、协议、默认配置）；Channel 是
 
 - 凭证 CRUD（`apiKey` / `priority` / `weight` / `description`）
 - 凭证测试（`POST /{id}/test`）
-- 凭证明文仅详情接口返回（用于复制），存储时 AES-256 加密
+- 凭证明文仅详情接口返回（用于复制），存储时 AES-256-GCM 加密
 
 详见 [渠道管理](/admin/channels/) 的"凭证管理"。
 

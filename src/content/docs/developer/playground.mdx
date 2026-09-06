@@ -9,7 +9,7 @@ Playground 位于控制台 **Quickstart** 模块，支持在线调试模型调�
 
 ## 功能
 
-- **模型选择**：从模型卡片浏览，按能力标签（`vision` / `functionCalling` / `streaming`）筛选
+- **模型选择**：从模型卡片浏览与搜索（能力标签筛选见模型目录 Catalog 模块）
 - **参数配置**：设置 system prompt、temperature、max_tokens 等
 - **流式输出**：实时查看 SSE 流式响应
 - **用量统计**：显示输入 / 输出 Token 与耗时
@@ -34,6 +34,8 @@ Playground 支持以 OpenAI 或 Anthropic 协议调用同一模型，生成的�
 | Anthropic | `POST /anthropic/v1/messages` | `x-api-key` |
 
 > 协议转换由网关 `ProtocolConverter` 完成，调用方可用任一协议调用任一上游模型。详见 [协议转换](/api/protocol-convert/)。
+
+> Playground 本身通过管理面体验端点 `POST /api/v1/experience/chat`（SSE 流式）直连指定渠道调试，生成给调用方的代码片段则面向 `/v1/chat/completions` 与 `/anthropic/v1/messages` 标准端点。
 
 ## 下一步
 

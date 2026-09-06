@@ -20,7 +20,7 @@ description: codingas.com 使用中的高频问题解答
 
 ### 调用返回 502 / 上游不可用？
 
-网关未配置对应模型的上游 Provider Key，或上游凭证已失效。在管理后台【Provider 管理】检查上游 Key 配置与健康状态。
+网关未配置对应模型的上游 Provider Key，或上游凭证已失效。在管理后台【渠道管理】检查渠道凭证配置与健康状态。
 
 ### 流式响应如何触发？
 
@@ -30,10 +30,10 @@ OpenAI 与 Anthropic 端点均通过请求体 `"stream": true` 触发 SSE 流式
 
 ### 启动时报 ENCRYPTION_KEY_MISSING？
 
-生产环境（非 dev/local profile）必须配置 `GATEWAY_ENCRYPTION_KEY` 环境变量：
+生产环境（非 dev/local profile）必须配置 `ENCRYPTION_KEY` 环境变量：
 
 ```bash
-export GATEWAY_ENCRYPTION_KEY="$(openssl rand -base64 32)"
+export ENCRYPTION_KEY="$(openssl rand -base64 32)"
 ```
 
 详见 [安装部署](/deploy/) 的"加密密钥"部分。
@@ -54,4 +54,4 @@ local profile 使用 H2 文件库（`./data/gateway`），数据持久化到文�
 
 ### 如何查看 Token 用量？
 
-调用 `GET /api/v1/stats` 查看概览统计。按维度查询的专用端点规划中，详见 [Token 计量与配额](/admin/token-quota/)。
+调用 `GET /api/v1/stats` 查看概览统计（今日请求数与 Token 消耗），`GET /api/v1/stats/trend?days=7` 查看按天趋势，`GET /api/v1/stats/model-usage?limit=5` 查看模型用量 TopN。详见 [Token 计量与配额](/admin/token-quota/)。

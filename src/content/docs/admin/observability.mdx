@@ -25,6 +25,14 @@ curl http://localhost:8080/actuator/health
 curl http://localhost:8080/actuator/prometheus
 ```
 
+自定义业务指标（Micrometer）：
+
+| 指标 | 说明 |
+|------|------|
+| `gateway.failover.triggered` | 渠道故障转移触发次数 |
+| `gateway.failover.exhausted` | 故障转移候选全部耗尽次数 |
+| `gateway.retry.exhausted` | 上游重试耗尽次数 |
+
 > 就绪探针包含 `db` 与 `providerRegistry`，启动时验证数据源与 Provider 注册表。Provider 健康配置：`stale-threshold=300s`、`failure-threshold=3`、`success-threshold=2`、`probe-timeout=10s`。
 
 ## OpenTelemetry 追踪
@@ -35,7 +43,7 @@ curl http://localhost:8080/actuator/prometheus
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
 ```
 
-每个请求的 Trace ID 贯穿：客户端调用 -> 认证 -> 路由 -> 上游调用 -> 计量 -> 审计，可在响应头或日志中获取。调用方反馈问题时建议提供 `traceId` 以便排查，详见 [错误码与重试](/developer/errors/)。
+每个请求的 Trace ID 贯穿：客户端调用 -> 认证 -> 路由 -> 上游调用 -> 计量 -> 审计。数据面调用记录（`call_logs`）与应用日志均包含 `traceId`；数据面响应**不返回** trace 响应头，请通过日志或调用记录追溯。详见 [错误码与重试](/developer/errors/)。
 
 ## 结构化日志
 

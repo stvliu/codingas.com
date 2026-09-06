@@ -12,18 +12,21 @@ description: codingas.com 版本变更记录
 首个可用版本，核心能力：
 
 - **双 API 兼容**：OpenAI（`/v1/chat/completions`）与 Anthropic（`/anthropic/v1/messages`）端点，支持协议互转
-- **应用与渠道**：应用聚合根（Key 归属 + 渠道授权 + 应用级 `priority` / `timeout` / `failureStrategy`），渠道管理（端点 / 凭证 / 模型映射 / 熔断）
+- **应用与渠道**：应用聚合根（Key 归属 + 渠道授权 + 应用级 `priority` / `timeout` / `failureStrategy`），渠道管理（端点 / 凭证 / 模型映射 / 熔断 / 一键复制）
 - **Provider 管理**：21 个内置供应商，渠道凭证资源池，priority + weight 负载均衡，多 Key 轮换
-- **路由**：路由链（PermissionRouter / HealthRouter / PriorityRouter / LoadBalanceRouter），当前硬编码 `WEIGHTED` 策略
+- **模型管理**：模型 CRUD、复制（继承规格快速生成）、解锁与状态管理；模型生命周期自动化（运行时 `MODEL_NOT_FOUND` 废弃检测 + 定时目录探测 + `DEPRECATED` 标签）
+- **路由**：路由链（PermissionRouter / HealthRouter / PriorityRouter / LoadBalanceRouter），列表字段排序（`sortBy` / `sortOrder`），当前硬编码 `WEIGHTED` 策略
 - **容灾**：L0 Key 级 + L1 渠道级故障转移，应用级 `FAIL_FAST` / `FAIL_RETRY` / `FAIL_OVER` 策略，端点级熔断器，转移事件流
-- **安全**：IP 黑名单、API Key 认证、AES-256 加密存储、密钥脱敏、审计日志
+- **安全**：IP 黑名单、API Key 认证、AES-256-GCM 加密存储、密钥脱敏、审计日志
 - **可观测性**：OpenTelemetry 追踪、Prometheus 指标、Actuator 健康检查、结构化日志
-- **认证**：用户名密码登录（Sa-Token）、用户管理（ADMIN / USER）、调用方 API Key 鉴权
-- **控制台**：React + Ant Design 管理后台（Dashboard / Quickstart / Applications / Channels / Models / Users / ApiKeys / Catalog / Resilience）
+- **统计**：用量统计（概览 / 按天趋势 / 模型用量 TopN），数据源为调用记录 `call_logs`
+- **审计与设置**：审计日志 API（`/api/v1/audit-logs`，分页查询与按时间清理）、系统设置（`/api/v1/settings` + `system_settings` 表）
+- **认证**：用户名密码登录（Sa-Token）、用户管理（ADMIN / USER，含启停 / 角色 / 重置密码）、调用方 API Key 鉴权
+- **控制台**：React + Ant Design 管理后台 12 个模块（Dashboard / Channels / Models / ApiKeys / Quickstart / Catalog / Users / Applications / Resilience / AuditLogs / TokenLimits / Settings），支持中文 / English 界面
 
 ### 数据库演进
 
-通过 Flyway 管理表结构（`db/migration/`），截至本版本已演进至 V68，主要里程碑：
+通过 Flyway 管理表结构（`db/migration/`），截至本版本已演进至 V70，主要里程碑：
 
 - V1–V9：初始 schema、Provider 模板、API Key 字段
 - V16–V17：产品（Product）与团队（Team）模型引入
@@ -31,8 +34,10 @@ description: codingas.com 版本变更记录
 - V47：供应域合并
 - V49：移除 API Key 级 `models` / `quota`（改由应用渠道授权与 TokenLimit 控制）
 - V51–V53：团队（Team）迁移为应用（Application）
-- V54–V67：容灾配置（ResilienceProfile）引入后退场，Application 直接承载 `timeout` / `failureStrategy`
+- V54–V67：容灾配置（ResilienceProfile）与集群（Cluster）层退场，Application 直接承载 `timeout` / `failureStrategy`
 - V68：应用失败策略字段
+- V69：模型目录同步字段
+- V70：系统设置（`system_settings`）表
 
 ### 已知限制
 

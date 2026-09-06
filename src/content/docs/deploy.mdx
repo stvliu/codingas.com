@@ -59,7 +59,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 export DB_URL="jdbc:postgresql://localhost:5432/llm_gateway"
 export DB_USERNAME="llm_gateway"
 export DB_PASSWORD="your_secure_password"
-export GATEWAY_ENCRYPTION_KEY="$(openssl rand -base64 32)"  # 必填
+export ENCRYPTION_KEY="$(openssl rand -base64 32)"  # 必填
 export SPRING_PROFILES_ACTIVE=postgresql
 
 java -jar gateway-boot/target/gateway-boot-1.0.0-SNAPSHOT.jar
@@ -69,14 +69,15 @@ java -jar gateway-boot/target/gateway-boot-1.0.0-SNAPSHOT.jar
 
 ## 加密密钥（必读）
 
-API Key 使用 AES-256-GCM 加密存储，密钥通过环境变量 `GATEWAY_ENCRYPTION_KEY` 注入：
+API Key 使用 AES-256-GCM 加密存储。密钥获取顺序为：`gateway.security.encryption-key` 配置属性 → 环境变量 `ENCRYPTION_KEY` → 开发环境临时密钥：
 
 ```bash
 # 生成 32 字节 Base64 密钥
 openssl rand -base64 32
 ```
 
-- **生产环境必须配置**，否则启动抛 `ENCRYPTION_KEY_MISSING`
+- **生产环境（`postgresql` / `prod` 等非 `local`/`dev` profile）必须配置**，否则启动抛 `ENCRYPTION_KEY_MISSING`
+- 环境变量名为 `ENCRYPTION_KEY`；`GATEWAY_ENCRYPTION_KEY` 仅在 `local` profile 的 yml 映射中生效，生产环境请直接使用 `ENCRYPTION_KEY`
 - `local` / `dev` profile 允许使用临时密钥，但**重启后已加密数据无法解密**
 - 密钥丢失 = 所有已存储的上游 Key 失效，请妥善备份
 
@@ -99,10 +100,10 @@ openssl rand -base64 32
 | `DB_URL` | H2 文件 | 数据库 JDBC URL |
 | `DB_USERNAME` / `DB_PASSWORD` | `sa` / 空 | 数据库账号 |
 | `REDIS_HOST` / `REDIS_PORT` | `localhost` / `6379` | Redis 地址 |
-| `GATEWAY_ENCRYPTION_KEY` | 空 | API Key 加密密钥（生产必填） |
+| `ENCRYPTION_KEY` | 空 | API Key 加密密钥（生产必填，Base64 32 字节） |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | 空 | OpenTelemetry Trace 上报地址 |
 
-完整清单见 `deployments/docker/.env.example`。
+完整占位符清单见 `gateway-boot/src/main/resources/application.yml` 中 `${ENV:默认值}` 定义，另见 [配置项参考](/reference/config/)。
 
 ## 健康检查
 
@@ -110,7 +111,7 @@ openssl rand -base64 32
 curl http://localhost:8080/actuator/health
 ```
 
-可用端点：`/actuator/health`、`/actuator/health/liveness`、`/actuator/health/readiness`、`/actuator/prometheus`、`/actuator/info`。详见 [可观测性](/admin/observability/)。
+可用端点：`/actuator/health`、`/actuator/health/liveness`、`/actuator/health/readiness`、`/actuator/prometheus`、`/actuator/metrics`、`/actuator/traces`、`/actuator/info`。详见 [可观测性](/admin/observability/)。
 
 ## 四、Docker 部署
 
@@ -123,16 +124,29 @@ docker compose up -d
 
 Dockerfile 采用多阶段构建（单模块 `gateway-boot`），运行阶段基于 `eclipse-temurin:21-jre-alpine`，健康检查端点为 `/actuator/health`，默认暴露 `8080` 端口。
 
-## 五、jlink 二进制包
+## 五、系统安装包（deb / rpm / Windows zip）
 
-`deployments/package/` 提供 jlink 定制 JRE + jreleaser 打包，生成免 JRE 依赖的二进制发行包：
+`deployments/package/` 提供基于 Gradle ospackage 的系统安装包（不内置 JRE，目标机需预装 Java 17/21/25）：
 
 ```bash
-cd deployments/package
-./build.sh
+./deployments/package/build.sh
+# 产物（deployments/package/dist/）：
+#   llmgateway.deb          Linux deb（Ubuntu/Debian）
+#   llmgateway.rpm          Linux rpm（RHEL/Rocky/CentOS）
+#   llmgateway-win-*.zip    Windows zip
 ```
 
-产物为包含定制 JRE 的压缩包，解压后可直接运行，适合无 JDK 环境或离线部署。
+安装方式：
+
+```bash
+# Linux deb（自动拉取 openjdk-21-jre-headless 依赖），systemd 注册服务
+sudo apt install ./llmgateway_*.deb
+
+# Linux rpm（自动拉取 java-21-headless 依赖）
+sudo dnf install ./llmgateway-*.rpm
+```
+
+Windows 解压 zip 后以管理员身份运行 `bin\install.ps1`（需 PATH 可执行 `java`）。安装时密钥自动生成，务必备份。
 
 ## 下一步
 

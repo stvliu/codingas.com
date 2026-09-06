@@ -21,9 +21,10 @@ description: 渠道--上游接入、凭证、端点、模型映射与熔断的�
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | POST | `/api/v1/channels` | 创建渠道 |
+| POST | `/api/v1/channels/{id}/copy` | 复制渠道（本体 + 端点 + 模型实例 + 可选凭证；目标名称重复返回 `409 CONFLICT`） |
 | PUT | `/api/v1/channels/{id}` | 更新渠道 |
 | GET | `/api/v1/channels/{id}` | 渠道详情 |
-| GET | `/api/v1/channels` | 渠道列表（支持 `providerId`、`billingMode` 过滤） |
+| GET | `/api/v1/channels` | 渠道列表（支持 `providerId`、`billingMode` 过滤与 `sortBy`、`sortOrder` 排序） |
 | DELETE | `/api/v1/channels/{id}` | 删除渠道 |
 | PUT | `/api/v1/channels/{id}/state` | 切换渠道状态（由后端校验状态机） |
 
@@ -72,11 +73,12 @@ description: 渠道--上游接入、凭证、端点、模型映射与熔断的�
 控制台 **Channels** 模块功能最丰富：
 
 - **创建向导**：引导式新建渠道
-- **详情抽屉**：编辑渠道全貌（凭证 / 端点 / 模型映射 / 配额）
+- **复制渠道**：行内复制按钮 + 新建弹窗复制选择器
+- **详情抽屉**：编辑渠道全貌（凭证 / 端点 / 模型映射）
 - **分组列表 / 表格视图**：按 Provider 分组或平铺
 - **连通性测试**：验证渠道可用性
 - **熔断器按钮**：一键熔断 / 恢复
-- **批量导入 / 导出**：批量管理渠道
+- **批量导入 / 导出**：批量管理渠道（导出为 YAML，不含凭证明文）
 
 详见 [控制台快速上手](/console-guide/)。
 

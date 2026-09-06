@@ -15,7 +15,7 @@ description: HTTP 状态码、错误响应格式与调用方重试建议
 | `404` | 资源不存在 | 路径错误、模型未找到 | 核对端点路径，**不重试** |
 | `429` | 限流 | 触发令牌桶限流或上游限流 | 退避后重试 |
 | `500` | 服务器错误 | 网关内部异常 | 稍后重试 |
-| `502` | 上游错误 | Provider 返回错误 | 切换模型或稍后重试 |
+| `502` | 上游错误 | Provider 返回错误（含模型不存在，错误码为 `MODEL_NOT_FOUND`） | 切换模型或稍后重试 |
 | `503` | 熔断开启 | 端点熔断器处于 OPEN | 稍后重试 |
 
 ## 错误响应格式
@@ -50,23 +50,35 @@ codingas.com 根据请求端点返回**两种**错误格式，调用方需分别
 }
 ```
 
-### 其他异常
+### 拦截器短路错误（401 / 403 / 429）
 
-鉴权失败、限流、熔断、上游错误、服务器内部错误等返回网关统一格式 `ApiResponse`：
+认证、IP 黑名单、角色授权与限流在拦截器层短路，**不经过**上述协议格式，返回轻量 JSON：
+
+| 状态码 | 响应体 |
+|--------|--------|
+| `401` 认证失败 | `{"code": "UNAUTHORIZED", "message": "..."}` |
+| `403` IP 黑名单 / 角色不足 | `{"code": "ACCESS_DENIED", "message": "..."}` |
+| `429` 限流 | `{"error": {"code": "RATE_LIMIT_EXCEEDED", "message": "请求过于频繁，请稍后重试"}}` |
+
+### 服务端异常（400 参数非法 / 404 / 409 / 500 / 502 / 503）
+
+熔断、上游错误、服务器内部错误等经全局异常处理器返回网关统一格式 `ApiResponse`：
 
 ```json
 {
   "success": false,
   "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "请求过于频繁，请稍后重试"
+    "code": "UPSTREAM_ERROR",
+    "message": "上游服务返回错误"
   },
-  "traceId": "a1b2c3d4-...",
-  "timestamp": "2026-07-20T10:30:00Z"
+  "traceId": "trace_1753900200000",
+  "timestamp": "2026-08-31T10:30:00Z"
 }
 ```
 
-> `traceId` 可用于结合 [可观测性](/admin/observability/) 排查全链路。建议调用方日志记录 `traceId` 以便反馈问题时提供。
+常见 `code`：`400` 为 `VALIDATION_ERROR` / `BAD_REQUEST`；`404` 为 `NOT_FOUND`；`409` 为 `CONFLICT`；`500` 为 `INTERNAL_ERROR`；`502` 为上游错误类型名（如 `UPSTREAM_ERROR`、`MODEL_NOT_FOUND`）；`503` 熔断为 `UPSTREAM_ERROR`。
+
+> 数据面每次调用的真实 `traceId`（UUID）记录在调用日志与应用日志中；响应体 `traceId` 字段当前为占位实现，请以日志为准。详见 [可观测性](/admin/observability/)。
 
 ## 网关内部重试
 
@@ -76,12 +88,18 @@ codingas.com 根据请求端点返回**两种**错误格式，调用方需分别
 
 | 错误类型（`ProviderErrorType`） | 含义 | 策略 |
 |--------------------------------|------|------|
-| `RATE_LIMIT_ERROR` | 上游限流 | 限流退避重试 |
+| `RATE_LIMIT_ERROR` | 上游限流 | 限流退避重试（最多 5 次，2s 起步指数递增、60s 封顶） |
 | `TIMEOUT_ERROR` | 上游超时 | 快速重试 |
-| `SERVICE_UNAVAILABLE` | 上游不可用 | 服务不可用重试 |
+| `SERVICE_UNAVAILABLE` | 上游不可用 | 固定间隔重试（3 次、间隔 5s） |
+| `UPSTREAM_ERROR` | 上游其他错误 | 指数退避重试（默认最多 3 次、1s 起步 ×2） |
+| `NETWORK_ERROR` | 网络异常 | 指数退避重试 |
+| `UNKNOWN_ERROR` | 未分类错误 | 指数退避重试 |
 | `QUOTA_EXCEEDED` | 上游额度耗尽 | 不重试，触发渠道级故障转移 |
-| `INVALID_REQUEST` | 请求非法 | 不重试 |
-| `UPSTREAM_ERROR` | 上游其他错误 | 指数退避重试 |
+| `AUTHENTICATION_ERROR` | 上游认证失败 | 不重试，触发渠道级故障转移 |
+| `INVALID_REQUEST` | 请求非法 | 不重试，不转移 |
+| `MODEL_NOT_FOUND` | 模型不存在 | 不重试，不转移（触发模型自动废弃检测） |
+
+重试参数可通过 `gateway.retry.*` 配置调整，见 [配置项参考](/reference/config/)。
 
 重试与故障转移的关系详见 [容灾与高可用](/admin/resilience/)。
 

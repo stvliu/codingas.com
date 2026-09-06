@@ -36,6 +36,7 @@ codingas.com 提供应用级失败处理策略与端点级熔断器，保障上�
 | 错误类型 | 是否转移 | 说明 |
 |---------|---------|------|
 | `INVALID_REQUEST` | 否 | 请求级错误，换渠道无效 |
+| `MODEL_NOT_FOUND` | 否 | 模型不存在，请求级错误；触发模型自动废弃检测 |
 | `AUTHENTICATION_ERROR` | 是 | 共因故障，换账号有效 |
 | `RATE_LIMIT_ERROR` | 是 | 账号/渠道级限流 |
 | `QUOTA_EXCEEDED` | 是 | 配额账号级共用 |
@@ -66,6 +67,8 @@ curl -X PUT http://localhost:8080/api/v1/applications/1/channels \
 ## 端点级熔断器
 
 端点连续失败时自动 OPEN，后续请求跳过该端点；超时后 HALF_OPEN 试探恢复，成功转 CLOSED。管理员可手动 force-open / force-close 应急。
+
+当前熔断参数为内置默认值：滑动窗口 10 次、失败率阈值 50%、OPEN 持续 30s、HALF_OPEN 试探 3 次。
 
 ## 转移事件查询
 

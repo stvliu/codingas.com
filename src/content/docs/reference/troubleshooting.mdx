@@ -7,15 +7,19 @@ description: 常见错误码与问题定位
 
 ## 错误码速查
 
+错误响应格式详见 [错误码与重试](/developer/errors/)。
+
 | HTTP | 错误码 | 含义 | 排查方向 |
 |------|--------|------|---------|
-| 401 | `invalid_api_key` | 认证失败 | 检查 API Key 是否正确、是否已禁用 |
-| 403 | `Access denied: IP blocked` | IP 被封禁 | 检查 IP 黑名单配置 |
-| 403 | `permission_denied` | 权限不足 | 检查 Key 绑定的应用是否有该模型权限 |
-| 404 | `model_not_found` | 模型不存在 | 检查 model 名拼写、是否已配置该模型渠道 |
-| 429 | `rate_limit_exceeded` | 限流 | 降低请求频率或调整限流配置 |
-| 502 | `api_error` | 上游不可用 | 检查上游 Provider Key 健康状态、网络 |
-| 503 | `overloaded_error` | 服务过载 | 上游负载高，稍后重试或启用故障转移 |
+| 401 | `UNAUTHORIZED` | 认证失败 | 检查 API Key 是否正确、是否已删除 |
+| 403 | `ACCESS_DENIED` | IP 被封禁或角色权限不足 | 检查 IP 黑名单；USER 角色访问管理端点需 ADMIN 授权 |
+| 403 | `ACCESS_DENIED` | 应用未授权该渠道 | 检查 Key 绑定的应用渠道授权 |
+| 404 | `NOT_FOUND` | 路径或资源不存在 | 核对端点路径（Anthropic 为 `/anthropic/v1/messages`） |
+| 429 | `RATE_LIMIT_EXCEEDED` | 限流 | 降低请求频率或调整限流配置 |
+| 500 | `INTERNAL_ERROR` | 网关内部异常 | 记录日志中的 traceId 反馈 |
+| 502 | `UPSTREAM_ERROR` 等错误类型名 | 上游不可用 | 检查上游 Provider Key 健康状态、网络 |
+| 502 | `MODEL_NOT_FOUND` | 上游无此模型 | 检查 model 名拼写、是否已配置该模型渠道（触发自动废弃检测） |
+| 503 | `UPSTREAM_ERROR` | 熔断器 OPEN | 等待熔断恢复，或强制恢复端点 |
 
 ## 常见问题
 
@@ -25,11 +29,12 @@ description: 常见错误码与问题定位
 - **Anthropic 端点**：确认使用 `x-api-key` 头（非 Bearer）+ `anthropic-version: 2023-06-01`
 - Key 是否已删除或禁用：在 [密钥管理](/admin/apikeys/) 查询
 
-### 404 模型不存在
+### 502 且错误码为 `MODEL_NOT_FOUND`（模型不存在）
 
 - 检查请求的 `model` 字段拼写（如 `gpt-4o` 而非 `gpt4o`）
-- 确认管理后台已配置该模型的渠道（见 [Provider 管理](/admin/providers/)）
+- 确认管理后台已配置该模型的渠道（见 [渠道管理](/admin/channels/)）
 - 确认 Key 绑定的应用已授权访问该模型所在渠道
+- 该错误会被模型生命周期自动探测捕获，多次出现后模型实例会被标记 `DEPRECATED`
 
 ### 429 限流
 

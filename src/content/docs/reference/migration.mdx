@@ -17,7 +17,7 @@ pg_dump -U llm_gateway llm_gateway > backup_$(date +%Y%m%d).sql
 
 # 备份配置与加密密钥
 cp -r gateway-boot/src/main/resources/ config_backup/
-echo $GATEWAY_ENCRYPTION_KEY > encryption_key_backup.txt
+echo $ENCRYPTION_KEY > encryption_key_backup.txt
 ```
 
 > **加密密钥务必备份**：密钥丢失将导致所有已加密的上游 Provider Key 无法解密。
@@ -49,7 +49,7 @@ codingas.com 使用 Flyway 管理表结构（迁移脚本位于 `gateway-boot/sr
 
 ## 加密密钥兼容性
 
-`GATEWAY_ENCRYPTION_KEY` 必须跨版本保持一致：
+加密密钥（`ENCRYPTION_KEY` 环境变量或 `gateway.security.encryption-key` 属性）必须跨版本保持一致：
 
 - **不可更换密钥**：换密钥后历史加密的上游 Key 无法解密
 - **如需轮换密钥**：需先解密所有上游 Key，更换密钥后重新加密（当前版本未提供自动轮换工具，需手动处理）
