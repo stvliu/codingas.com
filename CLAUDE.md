@@ -19,6 +19,16 @@ pnpm lint:linkcheck   # 扫描 dist/ 下 HTML 内部链接是否断链（必须�
 
 本仓库无单元测试框架，质量保障依赖上述两个 lint 脚本。CI（`.github/workflows/deploy-site.yml`）在 build 后依次跑 slugcheck 与 linkcheck，本地提交前应同样跑一遍。
 
+## Wiki 文档镜像
+
+`src/content/docs/` 的文档经 `scripts/export-wiki.mjs` 导出为 Gollum Wiki 格式，双路镜像到产品仓库 Wiki（GitHub `stvliu/llm-gateway` 与 Gitee `ezxbao_liuye/llm-gateway`）。**文档变更后执行 `pnpm wiki:push`**（内部先导出再推送，一步完成）：
+
+- 导出规则（MDX 组件降级、frontmatter 剥离、链接改写）见 `scripts/export-wiki.mjs` 头注释与 `openspec/changes/migrate-github-pages-and-wiki/specs/wiki-export/spec.md`。
+- 侧边栏单一来源是 `astro.sidebar.mjs`（`astro.sidebar.ts` 仅 re-export）——改侧边栏只改 `.mjs`，文档站与 Wiki 侧边栏同步生效。
+- 导出器自带断链自校验：产物内 wiki 内部链接断链即非零退出，推送被阻断。
+- 同步幂等：产物无差异不产生 commit；任一落点失败非零退出并指明落点（GitHub 需 `stvliu` 凭据、Gitee 需 `ezxbao_liuye` 凭据，取自本地 git 凭据管理器）。
+- Wiki 定位为只读镜像：直接编辑 wiki 会被下次同步覆盖，内容变更一律回本仓库。
+
 构建时站点 URL 由 `PUBLIC_SITE_URL` 环境变量控制，默认 `https://codingas.com`。
 
 ## 架构
@@ -42,7 +52,7 @@ pnpm lint:linkcheck   # 扫描 dist/ 下 HTML 内部链接是否断链（必须�
 ### 文档内容与侧边栏
 
 - 文档为 `.mdx`/`.md`，frontmatter 只需 `title` 与 `description`（Starlight schema，见 `src/content.config.ts`，Astro 6 Content Layer API）。
-- 侧边栏在 `astro.sidebar.ts` 用 `slug`（不带前导斜杠）引用文档。新增文档后必须在此登记，否则不会出现在导航。
+- 侧边栏在 `astro.sidebar.mjs` 用 `slug`（不带前导斜杠）引用文档。新增文档后必须在此登记，否则不会出现在导航。
 - 站点内容不区分版本（已统一为单一产品），侧边栏全部条目均渲染，不做条件隐藏与版本标签。
 - 旧 `docs/` 链接重定向映射在 `astro.redirects.ts`（当前为空，按需追加）。
 
@@ -60,6 +70,8 @@ pnpm lint:linkcheck   # 扫描 dist/ 下 HTML 内部链接是否断链（必须�
 
 ## 部署备注
 
-部署 workflow 监听 `master` 分支 push 触发 Cloudflare Pages 生产部署，PR 触发预览。注意当前默认开发分支为 `main`，且仓库主托管在 Gitee（Gitee 不运行 GitHub Actions）——该 workflow 文件保留以备镜像到 GitHub 后复用，Gitee 侧需改用 Gitee Go 或 Cloudflare Pages 直连。
+部署采用 **Cloudflare Pages 直连 GitHub 仓库**（`stvliu/codingas.com`）：push 到生产分支 `main` 自动触发生产部署，PR 自动生成预览部署。仓库内不保留 CI workflow（原 `.github/workflows/deploy-site.yml` 已删除），质量门槛内联在 Cloudflare 构建命令中：`pnpm build && pnpm lint:slugcheck && pnpm lint:linkcheck`，任一失败即阻断部署。
+
+Cloudflare Pages 项目侧配置：构建输出目录 `dist`；环境变量 `PUBLIC_SITE_URL=https://codingas.com` 与 `NODE_VERSION=20`（生产与预览环境均需配置，Node 版本同时受 `.nvmrc` 锁定）。Gitee 镜像仅作源码备份，不参与部署。
 
 `pnpm-workspace.yaml` 的 `allowBuilds` 白名单（`@parcel/watcher`、`esbuild`、`sharp`）是 pnpm 11 构建脚本放行配置，缺失会导致 `ERR_PNPM_IGNORED_BUILDS` 中断 `astro dev`。新增需要构建脚本的依赖时在此登记。

@@ -10,7 +10,9 @@
     "preview": "astro preview",
     "astro": "astro",
     "lint:linkcheck": "node scripts/linkcheck.mjs",
-    "lint:slugcheck": "node scripts/slugcheck.mjs"
+    "lint:slugcheck": "node scripts/slugcheck.mjs",
+    "export:wiki": "node scripts/export-wiki.mjs",
+    "wiki:push": "node scripts/wiki-push.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.2.1",
