@@ -70,8 +70,22 @@ pnpm lint:linkcheck   # 扫描 dist/ 下 HTML 内部链接是否断链（必须�
 
 ## 部署备注
 
-部署采用 **Cloudflare Pages 直连 GitHub 仓库**（`stvliu/codingas.com`）：push 到生产分支 `main` 自动触发生产部署，PR 自动生成预览部署。仓库内不保留 CI workflow（原 `.github/workflows/deploy-site.yml` 已删除），质量门槛内联在 Cloudflare 构建命令中：`pnpm build && pnpm lint:slugcheck && pnpm lint:linkcheck`，任一失败即阻断部署。
+部署采用 **Cloudflare Workers Builds 触发构建 + 发布到 Cloudflare Pages** 的双项目管道（GitHub 仓库 `stvliu/codingas.com`）：
 
-Cloudflare Pages 项目侧配置：构建输出目录 `dist`；环境变量 `PUBLIC_SITE_URL=https://codingas.com` 与 `NODE_VERSION=20`（生产与预览环境均需配置，Node 版本同时受 `.nvmrc` 锁定）。Gitee 镜像仅作源码备份，不参与部署。
+- **构建项目**（Workers Git 集成）：仅承担 CI 载体——push 到 `main` 触发生产构建，PR 触发预览构建。自身不承载站点内容（其 workers.dev 域名上只有占位响应，应保持关闭，且**不可删除该项目**，否则失去自动触发）。
+- **Pages 项目 `codingas-com`**：站点实际发布目标（`codingas-com.pages.dev` 与自定义域 `codingas.com`）。两个项目同名，注意区分。
+
+质量门槛内联在构建命令中：`pnpm build && pnpm lint:slugcheck && pnpm lint:linkcheck`，任一失败即阻断部署。发布经 Deploy command 执行 `npx wrangler pages deploy`，项目名与发布目录由仓库根 `wrangler.jsonc` 提供（`name` + `pages_build_output_dir`）。Pages 项目需预先存在——wrangler 在 CI 非交互环境不会自动创建。
+
+构建项目侧环境变量（生产与预览均需配置）：
+
+| 变量 | 值 | 说明 |
+|---|---|---|
+| `PUBLIC_SITE_URL` | `https://codingas.com` | 站点构建 URL |
+| `NODE_VERSION` | `22` | 构建 Node 版本，优先级高于 `.nvmrc`（仓库 `.nvmrc` 仍为 20，本地升级后同步） |
+| `PNPM_VERSION` | `11` | 镜像默认 pnpm 10 不识别 `allowBuilds`，会导致构建脚本被忽略 |
+| `CLOUDFLARE_API_TOKEN` | （Secret） | 自定义 token，需 **Account → Cloudflare Pages → Edit** 权限；runner 内置 token 仅含 Workers 权限，跑 `wrangler pages deploy` 会报 code 10000 |
+
+推送目标注意：`origin` 是 Gitee（仅源码备份，不参与部署），推 GitHub 需 `git push github main`。
 
 `pnpm-workspace.yaml` 的 `allowBuilds` 白名单（`@parcel/watcher`、`esbuild`、`sharp`）是 pnpm 11 构建脚本放行配置，缺失会导致 `ERR_PNPM_IGNORED_BUILDS` 中断 `astro dev`。新增需要构建脚本的依赖时在此登记。
