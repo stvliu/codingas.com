@@ -21,11 +21,23 @@
 - **THEN** 产物正文不含 YAML 分隔块，首行为 `# <title>`，`description` 不出现在产物中
 
 ### Requirement: MDX 组件降级
-导出器 SHALL 将 `Tabs`/`TabItem` 结构降级为按 `TabItem` 标签划分的 `### <标签名>` 分节标题（子内容原样保留）；遇到其他 JSX 组件或无法识别的 MDX 语法 MUST 以非零码报错退出，SHALL NOT 静默输出损坏内容。
+导出器 SHALL 将 `Tabs`/`TabItem` 结构降级为按 `TabItem` 标签划分的 `### <标签名>` 分节标题（子内容原样保留）；SHALL 将 Starlight aside（`:::note[标题]`/`::::caution[标题]` 等指令）降级为 blockquote：标题行渲染为 `**<标题>**` 并带引用前缀，块内逐行加 `>` 引用前缀（嵌套按深度叠加，如 `>>`），闭行移除；显式标题缺省时按类型映射（note/tip/caution/danger/aside → 注意/提示/警告/危险/说明），无标题且类型未映射、块未闭合或出现孤立闭行 MUST 以非零码报错；遇到其他 JSX 组件或无法识别的 MDX 语法 MUST 以非零码报错退出，SHALL NOT 静默输出损坏内容。
 
 #### Scenario: Tabs 降级
 - **WHEN** 导出含 `<Tabs>`/`<TabItem label="Python">` 的文档
 - **THEN** 产物以 `### Python` 分节，节内为原 TabItem 内容，无 JSX 残留
+
+#### Scenario: aside 降级
+- **WHEN** 导出含 `::::caution[路径前缀]`…`::::` 的文档
+- **THEN** 产物中开行变为 `> **路径前缀**`，块内行带 `>` 前缀，闭行移除，无 `:::` 残留
+
+#### Scenario: aside 无标题按类型映射
+- **WHEN** 导出含无标题的 `:::note` 指令
+- **THEN** 产物标题行为 `> **注意**`
+
+#### Scenario: aside 语法损坏报错
+- **WHEN** aside 缺少闭行或出现无对应开行的闭行
+- **THEN** 导出以非零码失败，错误信息指明文件与行号
 
 #### Scenario: 未知组件报错
 - **WHEN** 文档中出现导出器不支持的 JSX 组件

@@ -47,13 +47,14 @@ async function walk(dir, prefix = '') {
 }
 
 // 剥离 YAML frontmatter，提取 title（去包裹引号）。description 直接丢弃。
+// offset 为 frontmatter 块行数：剥离后正文行号 + offset = 源文件行号，供报错定位。
 function stripFrontmatter(text, rel) {
   const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
-  if (!m) return { body: text, title: null };
+  if (!m) return { body: text, title: null, offset: 0 };
   const tm = m[1].match(/^title:\s*(.+)$/m);
   let title = tm ? tm[1].trim() : null;
   if (title) title = title.replace(/^['"]|['"]$/g, '');
-  return { body: text.slice(m[0].length), title };
+  return { body: text.slice(m[0].length), title, offset: (m[0].match(/\n/g) || []).length };
 }
 
 // 按 ``` 围栏切分为代码/非代码段（start 为段首行号，0-based）。
@@ -87,24 +88,58 @@ function splitByFence(text) {
   return segments;
 }
 
-// MDX 组件降级（仅非代码段）：删除组件 import 与 Tabs/TabItem 标签行，
+// Starlight aside（:::/:::: 指令）降级为 Gollum blockquote：
+// 开行 `::::note[标题]` → `> **标题**`（无标题按类型映射，未知类型报错）；
+// 块内逐行加 `>` 前缀（嵌套按栈深叠加），闭行 `::::` 移除；未闭合/孤立闭行报错。
+// 返回 [{ text, no }] 行对象数组，保持原始行号供下游报错定位。
+const ASIDE_TYPE_NAMES = { note: '注意', tip: '提示', caution: '警告', danger: '危险', aside: '说明' };
+function applyAsides(lines, rel, baseLine) {
+  const out = [];
+  const stack = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const lineNo = baseLine + i + 1;
+    if (/^(:{3,})\s*$/.test(line)) {
+      if (!stack.length) {
+        throw new Error(`${rel}:${lineNo} 孤立的 aside 闭行（${line.trim()}），缺少对应开行`);
+      }
+      stack.pop();
+      continue;
+    }
+    const open = line.match(/^(:{3,})\s*(\w+)?(?:\[([^\]]*)\])/);
+    if (open) {
+      const title = open[3] ?? ASIDE_TYPE_NAMES[open[2] ?? ''];
+      if (!title) {
+        throw new Error(`${rel}:${lineNo} aside 类型 "${open[2]}" 无标题且不在已知类型（${Object.keys(ASIDE_TYPE_NAMES).join('/')}），请补充标题或扩展映射`);
+      }
+      stack.push(lineNo);
+      out.push({ text: `${'>'.repeat(stack.length)} **${title}**`, no: lineNo });
+      continue;
+    }
+    const prefix = stack.length ? `${'>'.repeat(stack.length)} ` : '';
+    out.push({ text: line ? prefix + line : prefix.trimEnd(), no: lineNo });
+  }
+  if (stack.length) {
+    throw new Error(`${rel}:${stack[0]} 开启的 aside 块未闭合（缺少闭行 ::::）`);
+  }
+  return out;
+}
+
+// MDX 组件降级（仅非代码段）：aside 降级为 blockquote、删除组件 import 与 Tabs/TabItem 标签行，
 // <TabItem label="x"> 降级为 ### x 分节；遇到其他 JSX 组件报错（文件:行号）。
 function demoteMdx(segment, rel) {
   const out = [];
-  const lines = segment.text.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const lineNo = segment.start + i + 1;
+  for (const { text: rawLine, no: lineNo } of applyAsides(segment.text.split('\n'), rel, segment.start)) {
+    // 剥离 blockquote 前缀（aside 降级产物）：组件降级在去前缀的行体上匹配，输出时补回前缀
+    const pre = rawLine.match(/^(?:>\s?)+/);
+    const prefix = pre ? pre[0] : '';
+    const line = rawLine.slice(prefix.length);
     // 仅删除真正的 JS import 语句（含 from '...' 或 side-effect import），避免误删以 import 开头的正文行
     if (/^import\s/.test(line) && /(?:\bfrom\s*['"]|^\s*import\s+['"])/.test(line)) continue;
-    // Starlight aside（:::/:::: 指令）暂无降级实现，按 spec 要求报错而非静默输出
-    if (/^:::+/.test(line)) {
-      throw new Error(`${rel}:${lineNo} 含 Starlight aside 语法（${line.trim().slice(0, 24)}），导出器暂不支持，请先降级文档或扩展导出器`);
-    }
     if (/^<Tabs\b/.test(line) || /^<\/Tabs>/.test(line)) continue;
     const item = line.match(/^<TabItem\b[^>]*\blabel="([^"]+)"[^>]*>/);
     if (item) {
-      out.push('', `### ${item[1]}`, '');
+      out.push(prefix.trimEnd(), prefix + `### ${item[1]}`, prefix.trimEnd());
       continue;
     }
     if (/^<\/TabItem>/.test(line)) continue;
@@ -114,7 +149,7 @@ function demoteMdx(segment, rel) {
     if (jsx) {
       throw new Error(`${rel}:${lineNo} 不支持的 MDX 组件 <${jsx[0].slice(1)}>，请先降级文档或扩展导出器`);
     }
-    out.push(line);
+    out.push(prefix + line);
   }
   return out.join('\n').replace(/\n{3,}/g, '\n\n');
 }
@@ -139,9 +174,9 @@ function rewriteLinks(segmentText, currentPath, pathMap) {
 
 // 单页转换：frontmatter 剥离 → 分段降级/改写 → H1 保证（正文无 H1 时以 title 补首行）。
 function convertPage(raw, rel, currentPath, pathMap) {
-  const { body, title } = stripFrontmatter(raw, rel);
+  const { body, title, offset } = stripFrontmatter(raw, rel);
   const converted = splitByFence(body)
-    .map((s) => (s.isCode ? s.text : rewriteLinks(demoteMdx(s, rel), currentPath, pathMap)))
+    .map((s) => (s.isCode ? s.text : rewriteLinks(demoteMdx({ ...s, start: s.start + offset }, rel), currentPath, pathMap)))
     .join('\n')
     .replace(/^\s+/, '');
   const firstContent = converted.split('\n').find((l) => l.trim() !== '') ?? '';

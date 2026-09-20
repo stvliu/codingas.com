@@ -13,6 +13,7 @@
 - [x] 1.7 实现产物自校验：扫描产物内 wiki 内部链接，断链时非零退出并列出来源与目标；通过时输出页面数统计
 - [x] 1.8 `package.json` 登记导出脚本；对全部 31 篇执行导出并人工抽查代表页：3 个含 Tabs 的 API 文档、`quickstart`、`reference/roadmap`（含 `/contact-us/` 链接）
 - [x] 1.9 侧栏优化（用户反馈）：页面按侧边栏分组目录 + 中文 title 命名（Gitee 页面树显示中文）；链接 target 空格编码 `%20`；`_Sidebar.md` 改用 wikilink 绝对引用；Gitee 落点排除 `_Sidebar.md`/`_Footer.md`
+- [x] 1.10 aside 降级（代码审查后补）：Starlight aside（`:::`/`::::`）降级为 blockquote（标题行 `**<标题>**` + 块内容 `>` 前缀，嵌套叠加深度；无标题按类型映射，未闭合/孤立闭行/未知类型报错）；同步补 wiki-export spec 的 Requirement 与 Scenario
 
 ## 2. 本地双路同步
 
