@@ -1,13 +1,18 @@
 ---
-interface Props { title: string; placeholder: string; }
-const { title, placeholder } = Astro.props;
+import { Image } from 'astro:assets';
+
+interface Props { title: string; image: ImageMetadata; alt: string; }
+const { title, image, alt } = Astro.props;
 ---
 <section class="carousel">
   <h2>{title}</h2>
-  <div class="placeholder">{placeholder}</div>
+  <div class="frame">
+    <Image src={image} alt={alt} widths={[480, 800, 1200]} sizes="(max-width: 848px) 100vw, 800px" />
+  </div>
 </section>
 
 <style>
   .carousel { padding: 48px 0; text-align: center; }
-  .placeholder { margin: 24px auto; max-width: 800px; height: 300px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 12px; color: #9ca3af; }
+  .frame { margin: 24px auto 0; max-width: 800px; border-radius: 12px; overflow: hidden; border: 1px solid var(--sl-color-gray-6); }
+  .frame :global(img) { display: block; width: 100%; height: auto; }
 </style>

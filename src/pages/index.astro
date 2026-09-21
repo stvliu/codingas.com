@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/Hero.astro';
 import FeatureCard from '../components/FeatureCard.astro';
 import Carousel from '../components/Carousel.astro';
+import consoleMain from '../assets/console-main.jpg';
 import { home } from '../data/i18n/home.ts';
 import { homeFeatures } from '../data/homeFeatures.ts';
 
@@ -24,7 +25,7 @@ const t = home.zh;
     <p>{t.narrative.security}</p>
   </section>
 
-  <Carousel title={t.console.title} placeholder={t.console.placeholder} />
+  <Carousel title={t.console.title} image={consoleMain} alt={t.console.alt} />
 
   <section class="features">
     <h2>{t.features.title}</h2>
