@@ -75,7 +75,9 @@ pnpm lint:linkcheck   # 扫描 dist/ 下 HTML 内部链接是否断链（必须�
 - **构建项目**（Workers Git 集成）：仅承担 CI 载体——push 到 `main` 触发生产构建，PR 触发预览构建。自身不承载站点内容（其 workers.dev 域名上只有占位响应，应保持关闭，且**不可删除该项目**，否则失去自动触发）。
 - **Pages 项目 `codingas-com`**：站点实际发布目标（`codingas-com.pages.dev` 与自定义域 `codingas.com`）。两个项目同名，注意区分。
 
-质量门槛内联在构建命令中：`pnpm build && pnpm lint:slugcheck && pnpm lint:linkcheck`，任一失败即阻断部署。发布经 Deploy command 执行 `npx wrangler pages deploy`，项目名与发布目录由仓库根 `wrangler.jsonc` 提供（`name` + `pages_build_output_dir`）。Pages 项目需预先存在——wrangler 在 CI 非交互环境不会自动创建。
+质量门槛内联在构建命令中：`pnpm build && pnpm lint:slugcheck && pnpm lint:linkcheck`，任一失败即阻断部署。发布经 Deploy command 执行 `npx wrangler pages deploy --branch=main`，项目名与发布目录由仓库根 `wrangler.jsonc` 提供（`name` + `pages_build_output_dir`）。Pages 项目需预先存在——wrangler 在 CI 非交互环境不会自动创建。
+
+> **Deploy command 必须带 `--branch=main`**：不带时 wrangler 在构建环境推断分支失败，部署会被标记为 **preview**（根域名与自定义域均不更新，只有 `{hash}.codingas-com.pages.dev` 能访问）。2026-09 曾因此踩坑。另注意：**在 Dashboard 重新绑定 Git 连接会清空构建配置**（环境变量、Build/Deploy command 需全部重录），排障时优先核对。
 
 构建项目侧环境变量（生产与预览均需配置）：
 
